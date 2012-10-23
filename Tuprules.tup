@@ -1,0 +1,3 @@
+CXXFLAGS += -pedantic -Wall -Wextra -Wwrite-strings -std=gnu++0x
+
+!cxx = |> g++ $(CXXFLAGS) -c %f -o %o |> %B.o
