@@ -20,30 +20,37 @@
  * SOFTWARE.
  */
 
-#include <glibmm/init.h>
-#include <glibmm/miscutils.h>
-#include <giomm/init.h>
+#include <iostream>
+
+#include <glibmm/convert.h>
+#include <giomm/datainputstream.h>
 
 #include "log_reader.hh"
 
-int main(int argc, char **argv)
+void LogReader::read(const Glib::RefPtr<Gio::File> & file)
 {
-	Glib::init();
-	Gio::init();
+	this->_load_file_contents(file);
 
-	LogReader log_reader;
-
-	Glib::RefPtr<Gio::File> input_directory = Gio::File::create_for_commandline_arg(argv[1]);
-
-	Glib::RefPtr<Gio::FileEnumerator> files = input_directory->enumerate_children("standard::name");
-
-	while (Glib::RefPtr<Gio::FileInfo> file_info = files->next_file())
-	{
-		Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(Glib::build_filename(input_directory->get_path(), file_info->get_name()));
-
-		log_reader.read(file);
-	}
-
-	return 0;
+	this->_lines.clear();
 }
 
+void LogReader::_load_file_contents(const Glib::RefPtr<Gio::File> & file)
+{
+	Glib::RefPtr<Gio::DataInputStream> file_stream = Gio::DataInputStream::create(file->read());
+	std::string line;
+
+	const std::string encodings[] = {"UTF-8", "CP1252", "ISO-8859-1"};
+
+	while (file_stream->read_line(line))
+	{
+		for (const std::string & encoding : encodings)
+		{
+			try
+			{
+				this->_lines.push_back(Glib::convert(line, "UTF-8", encoding));
+				break;
+			}
+			catch (Glib::ConvertError e) {}
+		}
+	}
+}

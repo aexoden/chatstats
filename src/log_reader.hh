@@ -20,30 +20,24 @@
  * SOFTWARE.
  */
 
-#include <glibmm/init.h>
-#include <glibmm/miscutils.h>
-#include <giomm/init.h>
+#ifndef CHATSTATS_LOG_READER_HH
+#define CHATSTATS_LOG_READER_HH
 
-#include "log_reader.hh"
+#include <string>
 
-int main(int argc, char **argv)
+#include <glibmm/ustring.h>
+#include <giomm/file.h>
+
+class LogReader
 {
-	Glib::init();
-	Gio::init();
+	public:
+		void read(const Glib::RefPtr<Gio::File> & file);
 
-	LogReader log_reader;
+	private:
+		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
 
-	Glib::RefPtr<Gio::File> input_directory = Gio::File::create_for_commandline_arg(argv[1]);
+		std::list<Glib::ustring> _lines;
+};
 
-	Glib::RefPtr<Gio::FileEnumerator> files = input_directory->enumerate_children("standard::name");
-
-	while (Glib::RefPtr<Gio::FileInfo> file_info = files->next_file())
-	{
-		Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(Glib::build_filename(input_directory->get_path(), file_info->get_name()));
-
-		log_reader.read(file);
-	}
-
-	return 0;
-}
+#endif // CHATSTATS_LOG_READER_HH
 

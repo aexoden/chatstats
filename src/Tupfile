@@ -1,4 +1,4 @@
 include_rules
 
 : foreach *.cc |> !cxx |>
-: *.o |> g++ %f -o %o |> chatstats
+: *.o |> g++ $(LDFLAGS) %f -o %o |> chatstats

@@ -1,3 +1,6 @@
 CXXFLAGS += -pedantic -Wall -Wextra -Wwrite-strings -std=gnu++0x
+CXXFLAGS += `pkg-config --cflags glibmm-2.4 giomm-2.4`
+
+LDFLAGS += `pkg-config --libs glibmm-2.4 giomm-2.4`
 
 !cxx = |> g++ $(CXXFLAGS) -c %f -o %o |> %B.o
