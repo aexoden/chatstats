@@ -20,33 +20,32 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_LOG_READER_HH
-#define CHATSTATS_LOG_READER_HH
+#ifndef CHATSTATS_EVENT_HH
+#define CHATSTATS_EVENT_HH
 
-#include <map>
-#include <memory>
-#include <vector>
+#include <glibmm/datetime.h>
 
-#include <glibmm/ustring.h>
-#include <giomm/file.h>
+#include "user.hh"
 
-#include "session.hh"
-
-class LogReader
+enum class EventType
 {
-	public:
-		std::vector<std::shared_ptr<Session>> read(const Glib::RefPtr<Gio::File> & file);
-
-	private:
-		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
-
-		void _parse_next_session(const std::shared_ptr<Session> & session);
-
-		std::vector<Glib::ustring> _lines;
-		std::vector<Glib::ustring>::const_iterator _iter;
-
-		std::multimap<int, Glib::ustring> _warnings;
+	EVENT_MESSAGE
 };
 
-#endif // CHATSTATS_LOG_READER_HH
+class Event
+{
+	public:
+		Event(const EventType type, const Glib::DateTime & timestamp, const User & subject, const User & object, const Glib::ustring & message);
+
+		const EventType type;
+
+		const Glib::DateTime timestamp;
+
+		const User subject;
+		const User object;
+
+		const Glib::ustring message;
+};
+
+#endif // CHATSTATS_EVENT_HH
 

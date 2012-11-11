@@ -21,25 +21,53 @@
  */
 
 #include <iostream>
+#include <list>
 
 #include <glibmm/convert.h>
 #include <giomm/datainputstream.h>
 
 #include "log_reader.hh"
 
-void LogReader::read(const Glib::RefPtr<Gio::File> & file)
+std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
 {
-	this->_load_file_contents(file);
+	std::vector<std::shared_ptr<Session>> sessions;
 
-	this->_lines.clear();
+	Glib::ustring target = "";
+
+	this->_warnings.clear();
+	this->_load_file_contents(file);
+	this->_iter = this->_lines.begin();
+
+	while (this->_iter != this->_lines.end())
+	{
+		std::shared_ptr<Session> session(new Session());
+		session->target = target;
+
+		this->_parse_next_session(session);
+
+		if (session->events.size() > 0)
+		{
+			if (target == "" && session->target != "")
+				target = session->target;
+
+			sessions.push_back(session);
+		}
+	}
+
+	if (target == "")
+		this->_warnings.insert(std::make_pair(0, "No session target in file"));
+
+	return sessions;
 }
 
 void LogReader::_load_file_contents(const Glib::RefPtr<Gio::File> & file)
 {
+	const std::string encodings[] = {"UTF-8", "CP1252", "ISO-8859-1"};
+
+	this->_lines.clear();
+
 	Glib::RefPtr<Gio::DataInputStream> file_stream = Gio::DataInputStream::create(file->read());
 	std::string line;
-
-	const std::string encodings[] = {"UTF-8", "CP1252", "ISO-8859-1"};
 
 	while (file_stream->read_line(line))
 	{
@@ -52,5 +80,15 @@ void LogReader::_load_file_contents(const Glib::RefPtr<Gio::File> & file)
 			}
 			catch (Glib::ConvertError e) {}
 		}
+	}
+}
+
+void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
+{
+	// TODO: Warn about multiple targets.
+
+	for (; this->_iter != this->_lines.end(); this->_iter++)
+	{
+
 	}
 }

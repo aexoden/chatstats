@@ -20,33 +20,10 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_LOG_READER_HH
-#define CHATSTATS_LOG_READER_HH
+#include "user.hh"
 
-#include <map>
-#include <memory>
-#include <vector>
-
-#include <glibmm/ustring.h>
-#include <giomm/file.h>
-
-#include "session.hh"
-
-class LogReader
-{
-	public:
-		std::vector<std::shared_ptr<Session>> read(const Glib::RefPtr<Gio::File> & file);
-
-	private:
-		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
-
-		void _parse_next_session(const std::shared_ptr<Session> & session);
-
-		std::vector<Glib::ustring> _lines;
-		std::vector<Glib::ustring>::const_iterator _iter;
-
-		std::multimap<int, Glib::ustring> _warnings;
-};
-
-#endif // CHATSTATS_LOG_READER_HH
-
+User::User(const Glib::ustring & nick, const Glib::ustring & user, const Glib::ustring & host) :
+	nick(nick),
+	user(user),
+	host(host)
+{ }
