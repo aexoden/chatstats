@@ -35,8 +35,8 @@ class Session
 	public:
 		Glib::ustring target;
 
-		std::shared_ptr<Glib::DateTime> start;
-		std::shared_ptr<Glib::DateTime> stop;
+		std::shared_ptr<const Glib::DateTime> start;
+		std::shared_ptr<const Glib::DateTime> stop;
 
 		std::list<std::shared_ptr<const Event>> events;
 };

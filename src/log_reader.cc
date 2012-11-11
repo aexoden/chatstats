@@ -24,6 +24,7 @@
 #include <list>
 
 #include <glibmm/convert.h>
+#include <glibmm/datetime.h>
 #include <giomm/datainputstream.h>
 
 #include "log_reader.hh"
@@ -89,6 +90,21 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 
 	for (; this->_iter != this->_lines.end(); this->_iter++)
 	{
+		auto line = *(this->_iter);
 
+		if (!line.empty())
+		{
+			this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, Glib::ustring::compose("Unrecognized line: %1", line)));
+		}
+	}
+
+	if (session->events.size() > 0)
+	{
+		if (!session->start)
+		{
+			session->start = std::make_shared<Glib::DateTime>(session->events.front()->timestamp);
+		}
+
+		session->stop = std::make_shared<Glib::DateTime>(session->events.back()->timestamp);
 	}
 }
