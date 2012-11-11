@@ -20,11 +20,27 @@
  * SOFTWARE.
  */
 
+#include <set>
+
 #include <glibmm/init.h>
 #include <glibmm/miscutils.h>
 #include <giomm/init.h>
 
 #include "log_reader.hh"
+
+std::set<std::string> get_filenames(Glib::RefPtr<Gio::File> directory)
+{
+	std::set<std::string> filenames;
+
+	Glib::RefPtr<Gio::FileEnumerator> file_enumerator = directory->enumerate_children("standard::name");
+
+	while (Glib::RefPtr<Gio::FileInfo> file_info = file_enumerator->next_file())
+	{
+		filenames.insert(Glib::build_filename(directory->get_path(), file_info->get_name()));
+	}
+
+	return filenames;
+}
 
 int main(int argc, char **argv)
 {
@@ -33,15 +49,9 @@ int main(int argc, char **argv)
 
 	LogReader log_reader;
 
-	Glib::RefPtr<Gio::File> input_directory = Gio::File::create_for_commandline_arg(argv[1]);
-
-	Glib::RefPtr<Gio::FileEnumerator> files = input_directory->enumerate_children("standard::name");
-
-	while (Glib::RefPtr<Gio::FileInfo> file_info = files->next_file())
+	for (const std::string & filename : get_filenames(Gio::File::create_for_commandline_arg(argv[1])))
 	{
-		Glib::RefPtr<Gio::File> file = Gio::File::create_for_path(Glib::build_filename(input_directory->get_path(), file_info->get_name()));
-
-		log_reader.read(file);
+		log_reader.read(Gio::File::create_for_path(filename));
 	}
 
 	return 0;
