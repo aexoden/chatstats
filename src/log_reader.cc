@@ -41,7 +41,7 @@ std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::Fi
 
 	while (this->_iter != this->_lines.end())
 	{
-		std::shared_ptr<Session> session(new Session());
+		auto session = std::make_shared<Session>();
 		session->target = target;
 
 		this->_parse_next_session(session);
