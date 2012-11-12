@@ -37,6 +37,8 @@ class LogReader
 	public:
 		std::vector<std::shared_ptr<Session>> read(const Glib::RefPtr<Gio::File> & file);
 
+		const std::multimap<int, Glib::ustring> & get_warnings() const;
+
 	private:
 		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
 

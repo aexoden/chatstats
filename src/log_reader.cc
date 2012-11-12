@@ -20,7 +20,6 @@
  * SOFTWARE.
  */
 
-#include <iostream>
 #include <list>
 
 #include <glibmm/convert.h>
@@ -59,6 +58,11 @@ std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::Fi
 		this->_warnings.insert(std::make_pair(0, "No session target in file"));
 
 	return sessions;
+}
+
+const std::multimap<int, Glib::ustring> & LogReader::get_warnings() const
+{
+	return this->_warnings;
 }
 
 void LogReader::_load_file_contents(const Glib::RefPtr<Gio::File> & file)

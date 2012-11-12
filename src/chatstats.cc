@@ -20,8 +20,13 @@
  * SOFTWARE.
  */
 
+#include <locale.h>
+
+#include <iomanip>
+#include <iostream>
 #include <set>
 
+#include <glibmm/convert.h>
 #include <glibmm/init.h>
 #include <glibmm/miscutils.h>
 #include <giomm/init.h>
@@ -44,6 +49,8 @@ std::set<std::string> get_filenames(Glib::RefPtr<Gio::File> directory)
 
 int main(int argc, char **argv)
 {
+	setlocale(LC_ALL, "");
+
 	Glib::init();
 	Gio::init();
 
@@ -52,6 +59,16 @@ int main(int argc, char **argv)
 	for (const std::string & filename : get_filenames(Gio::File::create_for_commandline_arg(argv[1])))
 	{
 		log_reader.read(Gio::File::create_for_path(filename));
+
+		std::string charset;
+		Glib::get_charset(charset);
+
+		for (auto warning : log_reader.get_warnings())
+		{
+			auto filename_string = Glib::ustring::format(std::setw(30), Glib::ustring::compose("%1:%2", Glib::path_get_basename(filename), warning.first));
+
+			std::cerr << Glib::ustring::compose("%1: %2", filename_string, warning.second) << std::endl;
+		}
 	}
 
 	return 0;
