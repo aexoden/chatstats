@@ -28,6 +28,11 @@
 
 #include "log_reader.hh"
 
+LogReader::LogReader()
+{
+	this->_regexes.push_back(std::make_pair<EventType, Glib::RefPtr<Glib::Regex>>(EventType::MESSAGE, Glib::Regex::create("^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$")));
+}
+
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
 {
 	std::vector<std::shared_ptr<Session>> sessions;
@@ -88,17 +93,45 @@ void LogReader::_load_file_contents(const Glib::RefPtr<Gio::File> & file)
 	}
 }
 
+std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
+{
+	Glib::MatchInfo match_info;
+
+	for (auto regex : this->_regexes)
+	{
+		if (regex.second->match(line, match_info))
+		{
+			Glib::DateTime timestamp;
+
+			User subject(match_info.fetch_named("subject_nick"), match_info.fetch_named("subject_user"), match_info.fetch_named("subject_host"));
+			User object(match_info.fetch_named("object_nick"), match_info.fetch_named("object_user"), match_info.fetch_named("object_host"));
+
+			return std::make_shared<const Event>(regex.first, timestamp, subject, object, match_info.fetch_named("message"));
+		}
+	}
+
+	return nullptr;
+}
+
 void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 {
 	// TODO: Warn about multiple targets.
-
 	for (; this->_iter != this->_lines.end(); this->_iter++)
 	{
 		auto line = *(this->_iter);
 
 		if (!line.empty())
 		{
-			this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, Glib::ustring::compose("Unrecognized line: %1", line)));
+			auto event = this->_parse_line(line);
+
+			if (event)
+			{
+				session->events.push_back(event);
+			}
+			else
+			{
+				this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, Glib::ustring::compose("Unrecognized line: %1", line)));
+			}
 		}
 	}
 

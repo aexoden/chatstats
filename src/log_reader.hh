@@ -27,21 +27,29 @@
 #include <memory>
 #include <vector>
 
+#include <glibmm/regex.h>
 #include <glibmm/ustring.h>
 #include <giomm/file.h>
 
+#include "event.hh"
 #include "session.hh"
 
 class LogReader
 {
 	public:
+		LogReader();
+
 		std::vector<std::shared_ptr<Session>> read(const Glib::RefPtr<Gio::File> & file);
 
 		const std::multimap<int, Glib::ustring> & get_warnings() const;
 
+	protected:
+		std::vector<std::pair<EventType, Glib::RefPtr<Glib::Regex>>> _regexes;
+
 	private:
 		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
 
+		std::shared_ptr<const Event> _parse_line(const Glib::ustring & line);
 		void _parse_next_session(const std::shared_ptr<Session> & session);
 
 		std::vector<Glib::ustring> _lines;

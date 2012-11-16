@@ -29,7 +29,7 @@
 
 enum class EventType
 {
-	EVENT_MESSAGE
+	MESSAGE
 };
 
 class Event
