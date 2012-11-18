@@ -21,16 +21,20 @@
  */
 
 #include <list>
+#include <sstream>
 
 #include <glibmm/convert.h>
 #include <glibmm/datetime.h>
+#include <glibmm/timezone.h>
 #include <giomm/datainputstream.h>
 
 #include "log_reader.hh"
 
 LogReader::LogReader()
 {
-	this->_regexes.push_back(std::make_pair<EventType, Glib::RefPtr<Glib::Regex>>(EventType::MESSAGE, Glib::Regex::create("^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$")));
+	this->_regex_timestamp.push_back(Glib::Regex::create("^(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2}) (?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})(?P<offset>[0-9+-]{5})$"));
+
+	this->_regex_event.push_back(std::make_pair<EventType, Glib::RefPtr<Glib::Regex>>(EventType::MESSAGE, Glib::Regex::create("^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$")));
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
@@ -97,20 +101,84 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 {
 	Glib::MatchInfo match_info;
 
-	for (auto regex : this->_regexes)
+	for (auto regex : this->_regex_event)
 	{
 		if (regex.second->match(line, match_info))
 		{
-			Glib::DateTime timestamp;
+			std::shared_ptr<const Glib::DateTime> timestamp = this->_parse_timestamp(match_info.fetch_named("timestamp"));
+
+			if (!timestamp)
+				return nullptr;
 
 			User subject(match_info.fetch_named("subject_nick"), match_info.fetch_named("subject_user"), match_info.fetch_named("subject_host"));
 			User object(match_info.fetch_named("object_nick"), match_info.fetch_named("object_user"), match_info.fetch_named("object_host"));
 
-			return std::make_shared<const Event>(regex.first, timestamp, subject, object, match_info.fetch_named("message"));
+			return std::make_shared<const Event>(regex.first, *timestamp, subject, object, match_info.fetch_named("message"));
 		}
 	}
 
 	return nullptr;
+}
+
+std::shared_ptr<const Glib::DateTime> LogReader::_parse_timestamp(const Glib::ustring & data)
+{
+	Glib::MatchInfo match_info;
+
+	for (auto regex : this->_regex_timestamp)
+	{
+		if (regex->match(data, match_info))
+		{
+			Glib::ustring offset = match_info.fetch_named("offset");
+			Glib::TimeZone timezone = offset.empty() ? Glib::TimeZone::create_local() : Glib::TimeZone::create(offset);
+
+			Glib::DateTime previous_timestamp = Glib::DateTime::create(timezone, 1970, 1, 1, 0, 0, 0);
+
+			if (this->_current_timestamp)
+			{
+				previous_timestamp = this->_current_timestamp->to_timezone(timezone);
+			}
+			else if (match_info.fetch_named("year").empty() || match_info.fetch_named("month").empty() || match_info.fetch_named("day").empty())
+			{
+				this->_add_warning("Partial timestamp used before complete timestamp");
+				return nullptr;
+			}
+
+			int year = this->_parse_timestamp_int(match_info.fetch_named("year"), previous_timestamp.get_year());
+			int month = this->_parse_timestamp_int(match_info.fetch_named("month"), previous_timestamp.get_month());
+			int day = this->_parse_timestamp_int(match_info.fetch_named("day"), previous_timestamp.get_day_of_month());
+			int hour = this->_parse_timestamp_int(match_info.fetch_named("hour"), previous_timestamp.get_hour());
+			int minute = this->_parse_timestamp_int(match_info.fetch_named("minute"), previous_timestamp.get_minute());
+			int second = this->_parse_timestamp_int(match_info.fetch_named("second"), previous_timestamp.get_second());
+
+			auto timestamp = std::make_shared<const Glib::DateTime>(Glib::DateTime::create(timezone, year, month, day, hour, minute, second).to_utc());
+
+			if (timestamp->to_unix() < previous_timestamp.to_unix())
+				this->_add_warning("Timestamp is earlier than the previous timestamp");
+
+			this->_current_timestamp = timestamp;
+
+			return timestamp;
+		}
+	}
+
+	this->_add_warning("Invalid or missing timestamp");
+	return nullptr;
+}
+
+int LogReader::_parse_timestamp_int(const Glib::ustring & data, int default_value)
+{
+	if (data.empty())
+		return default_value;
+
+	int value;
+	std::stringstream(data) >> value;
+
+	return value;
+}
+
+void LogReader::_add_warning(const Glib::ustring & warning)
+{
+	this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, warning));
 }
 
 void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
@@ -130,7 +198,7 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 			}
 			else
 			{
-				this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, Glib::ustring::compose("Unrecognized line: %1", line)));
+				this->_add_warning(Glib::ustring::compose("Unrecognized line: %1", line));
 			}
 		}
 	}

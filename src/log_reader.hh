@@ -44,16 +44,24 @@ class LogReader
 		const std::multimap<int, Glib::ustring> & get_warnings() const;
 
 	protected:
-		std::vector<std::pair<EventType, Glib::RefPtr<Glib::Regex>>> _regexes;
+		std::vector<std::pair<EventType, Glib::RefPtr<Glib::Regex>>> _regex_event;
+		std::vector<Glib::RefPtr<Glib::Regex>> _regex_timestamp;
 
 	private:
 		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
 
 		std::shared_ptr<const Event> _parse_line(const Glib::ustring & line);
+		std::shared_ptr<const Glib::DateTime> _parse_timestamp(const Glib::ustring & data);
+		int _parse_timestamp_int(const Glib::ustring & data, int default_value);
+
+		void _add_warning(const Glib::ustring & warning);
+
 		void _parse_next_session(const std::shared_ptr<Session> & session);
 
 		std::vector<Glib::ustring> _lines;
 		std::vector<Glib::ustring>::const_iterator _iter;
+
+		std::shared_ptr<const Glib::DateTime> _current_timestamp;
 
 		std::multimap<int, Glib::ustring> _warnings;
 };
