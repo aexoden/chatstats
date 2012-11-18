@@ -21,7 +21,7 @@
  */
 
 #include <list>
-#include <sstream>
+#include <string>
 
 #include <glibmm/convert.h>
 #include <glibmm/datetime.h>
@@ -169,11 +169,8 @@ int LogReader::_parse_timestamp_int(const Glib::ustring & data, int default_valu
 {
 	if (data.empty())
 		return default_value;
-
-	int value;
-	std::stringstream(data) >> value;
-
-	return value;
+	else
+		return stol(data.raw());
 }
 
 void LogReader::_add_warning(const Glib::ustring & warning)
