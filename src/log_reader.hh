@@ -56,6 +56,8 @@ class LogReader
 
 		void _add_warning(const Glib::ustring & warning);
 
+		void _add_regex_event(EventType type, const Glib::ustring & regex_string);
+
 		void _parse_next_session(const std::shared_ptr<Session> & session);
 
 		std::vector<Glib::ustring> _lines;

@@ -34,7 +34,7 @@ LogReader::LogReader()
 {
 	this->_regex_timestamp.push_back(Glib::Regex::create("^(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2}) (?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})(?P<offset>[0-9+-]{5})$"));
 
-	this->_regex_event.push_back(std::make_pair(EventType::MESSAGE, Glib::Regex::create("^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$")));
+	this->_add_regex_event(EventType::MESSAGE, "^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$");
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
@@ -176,6 +176,11 @@ int LogReader::_parse_timestamp_int(const Glib::ustring & data, int default_valu
 void LogReader::_add_warning(const Glib::ustring & warning)
 {
 	this->_warnings.insert(std::make_pair(this->_iter - this->_lines.begin() + 1, warning));
+}
+
+void LogReader::_add_regex_event(EventType type, const Glib::ustring & regex_string)
+{
+	this->_regex_event.push_back(std::make_pair(type, Glib::Regex::create(regex_string)));
 }
 
 void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
