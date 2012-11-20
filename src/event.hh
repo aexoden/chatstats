@@ -31,6 +31,7 @@ enum class EventType
 {
 	ACTION,
 	JOIN,
+	KICK,
 	MESSAGE,
 	NICK_CHANGE,
 	PART,
