@@ -32,6 +32,7 @@ enum class EventType
 	ACTION,
 	JOIN,
 	MESSAGE,
+	NICK_CHANGE,
 	PART,
 	QUIT
 };
