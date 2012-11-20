@@ -38,6 +38,8 @@ LogReader::LogReader()
 	this->_add_regex_event(EventType::ACTION, "^\\[(?P<timestamp>[^\\]]*)\\] \\* (?P<subject_nick>[^ ]*) ?(?P<message>.*)$");
 
 	this->_add_regex_event(EventType::JOIN, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? joins$");
+	this->_add_regex_event(EventType::PART, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? parts( \\((?P<message>.*)\\))?$");
+	this->_add_regex_event(EventType::QUIT, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? quits( \\((?P<message>.*)\\))?$");
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)

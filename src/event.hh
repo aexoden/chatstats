@@ -31,7 +31,9 @@ enum class EventType
 {
 	ACTION,
 	JOIN,
-	MESSAGE
+	MESSAGE,
+	PART,
+	QUIT
 };
 
 class Event
