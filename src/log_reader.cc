@@ -36,6 +36,8 @@ LogReader::LogReader()
 
 	this->_add_regex_event(EventType::MESSAGE, "^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$");
 	this->_add_regex_event(EventType::ACTION, "^\\[(?P<timestamp>[^\\]]*)\\] \\* (?P<subject_nick>[^ ]*) ?(?P<message>.*)$");
+
+	this->_add_regex_event(EventType::JOIN, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? joins$");
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
