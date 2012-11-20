@@ -29,6 +29,7 @@
 
 enum class EventType
 {
+	ACTION,
 	MESSAGE
 };
 
