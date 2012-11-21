@@ -45,6 +45,9 @@ LogReader::LogReader()
 	this->_add_regex_event(EventType::MODE_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) sets mode: (?P<message>.*)$");
 	this->_add_regex_event(EventType::TOPIC_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) changes topic to '(?P<message>.*)'$");
 
+	this->_add_regex_event(EventType::PARSE_SESSION_START, "^Session Start: (?P<timestamp>.*)$");
+	this->_add_regex_event(EventType::PARSE_SESSION_STOP, "^Session Stop: (?P<timestamp>.*)$");
+
 	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) kicks (?P<object_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
 }
 
@@ -207,7 +210,26 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 
 			if (event)
 			{
-				session->events.push_back(event);
+				if (event->type == EventType::PARSE_SESSION_START)
+				{
+					if (session->events.size() == 0)
+					{
+						session->start = std::make_shared<Glib::DateTime>(event->timestamp);
+					}
+					else
+					{
+						break;
+					}
+				}
+				else if (event->type == EventType::PARSE_SESSION_STOP)
+				{
+					this->_iter++;
+					break;
+				}
+				else
+				{
+					session->events.push_back(event);
+				}
 			}
 			else
 			{

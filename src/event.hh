@@ -37,7 +37,9 @@ enum class EventType
 	NICK_CHANGE,
 	PART,
 	TOPIC_CHANGE,
-	QUIT
+	QUIT,
+	PARSE_SESSION_START,
+	PARSE_SESSION_STOP
 };
 
 class Event
