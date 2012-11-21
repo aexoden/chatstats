@@ -24,7 +24,7 @@
 
 #include "event.hh"
 
-Event::Event(const EventType type, const Glib::DateTime & timestamp, const User & subject, const User & object, const Glib::ustring & message) :
+Event::Event(const EventType type, const std::shared_ptr<const Glib::DateTime> timestamp, const User & subject, const User & object, const Glib::ustring & message) :
 	type(type),
 	timestamp(timestamp),
 	subject(subject),

@@ -47,6 +47,7 @@ LogReader::LogReader()
 
 	this->_add_regex_event(EventType::PARSE_SESSION_START, "^Session Start: (?P<timestamp>.*)$");
 	this->_add_regex_event(EventType::PARSE_SESSION_STOP, "^Session Stop: (?P<timestamp>.*)$");
+	this->_add_regex_event(EventType::PARSE_SESSION_TARGET, "^Session Target: (?P<message>.*)$");
 
 	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) kicks (?P<object_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
 }
@@ -121,13 +122,16 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 		{
 			std::shared_ptr<const Glib::DateTime> timestamp = this->_parse_timestamp(match_info.fetch_named("timestamp"));
 
-			if (!timestamp)
+			if (!timestamp && regex.first != EventType::PARSE_SESSION_TARGET)
+			{
+				this->_add_warning("Invalid or missing timestamp");
 				return nullptr;
+			}
 
 			User subject(match_info.fetch_named("subject_nick"), match_info.fetch_named("subject_user"), match_info.fetch_named("subject_host"));
 			User object(match_info.fetch_named("object_nick"), match_info.fetch_named("object_user"), match_info.fetch_named("object_host"));
 
-			return std::make_shared<const Event>(regex.first, *timestamp, subject, object, match_info.fetch_named("message"));
+			return std::make_shared<const Event>(regex.first, timestamp, subject, object, match_info.fetch_named("message"));
 		}
 	}
 
@@ -175,7 +179,6 @@ std::shared_ptr<const Glib::DateTime> LogReader::_parse_timestamp(const Glib::us
 		}
 	}
 
-	this->_add_warning("Invalid or missing timestamp");
 	return nullptr;
 }
 
@@ -199,7 +202,6 @@ void LogReader::_add_regex_event(EventType type, const Glib::ustring & regex_str
 
 void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 {
-	// TODO: Warn about multiple targets.
 	for (; this->_iter != this->_lines.end(); this->_iter++)
 	{
 		auto line = *(this->_iter);
@@ -214,7 +216,7 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 				{
 					if (session->events.size() == 0)
 					{
-						session->start = std::make_shared<Glib::DateTime>(event->timestamp);
+						session->start = event->timestamp;
 					}
 					else
 					{
@@ -225,6 +227,13 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 				{
 					this->_iter++;
 					break;
+				}
+				else if (event->type == EventType::PARSE_SESSION_TARGET)
+				{
+					if (session->target == "")
+						session->target = event->message.lowercase();
+					else if (session->target != event->message.lowercase())
+						this->_add_warning("Multiple session targets defined");
 				}
 				else
 				{
@@ -242,9 +251,9 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 	{
 		if (!session->start)
 		{
-			session->start = std::make_shared<Glib::DateTime>(session->events.front()->timestamp);
+			session->start = session->events.front()->timestamp;
 		}
 
-		session->stop = std::make_shared<Glib::DateTime>(session->events.back()->timestamp);
+		session->stop = session->events.back()->timestamp;
 	}
 }

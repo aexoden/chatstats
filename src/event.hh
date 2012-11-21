@@ -23,6 +23,8 @@
 #ifndef CHATSTATS_EVENT_HH
 #define CHATSTATS_EVENT_HH
 
+#include <memory>
+
 #include <glibmm/datetime.h>
 
 #include "user.hh"
@@ -39,17 +41,18 @@ enum class EventType
 	TOPIC_CHANGE,
 	QUIT,
 	PARSE_SESSION_START,
-	PARSE_SESSION_STOP
+	PARSE_SESSION_STOP,
+	PARSE_SESSION_TARGET
 };
 
 class Event
 {
 	public:
-		Event(const EventType type, const Glib::DateTime & timestamp, const User & subject, const User & object, const Glib::ustring & message);
+		Event(const EventType type, std::shared_ptr<const Glib::DateTime> timestamp, const User & subject, const User & object, const Glib::ustring & message);
 
 		const EventType type;
 
-		const Glib::DateTime timestamp;
+		const std::shared_ptr<const Glib::DateTime> timestamp;
 
 		const User subject;
 		const User object;
