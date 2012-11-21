@@ -49,6 +49,9 @@ LogReader::LogReader()
 	this->_add_regex_event(EventType::PARSE_SESSION_STOP, "^Session Stop: (?P<timestamp>.*)$");
 	this->_add_regex_event(EventType::PARSE_SESSION_TARGET, "^Session Target: (?P<message>.*)$");
 
+	this->_add_regex_event(EventType::CTCP, "^\\[(?P<timestamp>[^\\]]*)\\] \\[(?P<subject_nick>[^ ]*)\\] (?P<message>.*)?$");
+	this->_add_regex_event(EventType::NOTICE, "^\\[(?P<timestamp>[^\\]]*)\\] -(?P<subject_nick>[^ ]*)- (?P<message>.*)$");
+
 	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) kicks (?P<object_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
 }
 

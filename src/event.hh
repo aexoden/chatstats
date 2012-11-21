@@ -32,11 +32,13 @@
 enum class EventType
 {
 	ACTION,
+	CTCP,
 	JOIN,
 	KICK,
 	MESSAGE,
 	MODE_CHANGE,
 	NICK_CHANGE,
+	NOTICE,
 	PART,
 	TOPIC_CHANGE,
 	QUIT,
