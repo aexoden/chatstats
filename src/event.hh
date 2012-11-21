@@ -33,6 +33,7 @@ enum class EventType
 	JOIN,
 	KICK,
 	MESSAGE,
+	MODE_CHANGE,
 	NICK_CHANGE,
 	PART,
 	QUIT
