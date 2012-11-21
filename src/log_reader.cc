@@ -41,8 +41,9 @@ LogReader::LogReader()
 	this->_add_regex_event(EventType::PART, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? parts( \\((?P<message>.*)\\))?$");
 	this->_add_regex_event(EventType::QUIT, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ !]*)(!(?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*))? quits( \\((?P<message>.*)\\))?$");
 
-	this->_add_regex_event(EventType::MODE_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) sets mode: (?P<message>.*)$");
 	this->_add_regex_event(EventType::NICK_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) is now known as (?P<object_nick>[^ ]*)$");
+	this->_add_regex_event(EventType::MODE_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) sets mode: (?P<message>.*)$");
+	this->_add_regex_event(EventType::TOPIC_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) changes topic to '(?P<message>.*)'$");
 
 	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) kicks (?P<object_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
 }

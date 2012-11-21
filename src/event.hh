@@ -36,6 +36,7 @@ enum class EventType
 	MODE_CHANGE,
 	NICK_CHANGE,
 	PART,
+	TOPIC_CHANGE,
 	QUIT
 };
 
