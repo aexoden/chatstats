@@ -20,25 +20,44 @@
  * SOFTWARE.
  */
 
-#include <locale.h>
+#ifndef CHATSTATS_OPERATION_HH
+#define CHATSTATS_OPERATION_HH
+
+#include <memory>
+#include <set>
+#include <string>
+#include <vector>
 
 #include <giomm/file.h>
-#include <giomm/init.h>
-#include <glibmm/init.h>
 
-#include "operation.hh"
+#include "session.hh"
 
-int main(int argc, char **argv)
+class Operation
 {
-	setlocale(LC_ALL, "");
+	public:
+		Operation(Glib::RefPtr<Gio::File> input_directory);
 
-	Glib::init();
-	Gio::init();
+		void execute();
 
-	ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[1]), Gio::File::create_for_commandline_arg(argv[2]));
+	protected:
+		Glib::RefPtr<Gio::File> _input_directory;
 
-	operation.execute();
+		std::set<std::string> _get_input_filenames();
 
-	return 0;
-}
+		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions) = 0;
+};
+
+class ConvertOperation : public Operation
+{
+	public:
+		ConvertOperation(Glib::RefPtr<Gio::File> input_directory, Glib::RefPtr<Gio::File> output_directory);
+
+	protected:
+		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+
+	private:
+		Glib::RefPtr<Gio::File> _output_directory;
+};
+
+#endif // CHATSTATS_OPERATION_HH
 
