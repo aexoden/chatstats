@@ -20,28 +20,31 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_SESSION_HH
-#define CHATSTATS_SESSION_HH
+#include <algorithm>
 
-#include <list>
-#include <memory>
+#include "session.hh"
 
-#include <glibmm/datetime.h>
-
-#include "event.hh"
-
-class Session
+std::shared_ptr<Session> Session::split(const Glib::DateTime & timestamp)
 {
-	public:
-		std::shared_ptr<Session> split(const Glib::DateTime & timestamp);
+	if (timestamp.to_unix() < this->start->to_unix() || timestamp.to_unix() > this->stop->to_unix())
+		return nullptr;
 
-		Glib::ustring target;
+	auto session = std::make_shared<Session>();
 
-		std::shared_ptr<const Glib::DateTime> start;
-		std::shared_ptr<const Glib::DateTime> stop;
+	auto iter = this->events.begin();
+	while ((*iter)->timestamp->to_unix() < timestamp.to_unix())
+		iter++;
 
-		std::list<std::shared_ptr<const Event>> events;
-};
+	std::move(iter, this->events.end(), session->events.begin());
 
-#endif // CHATSTATS_SESSION_HH
+	if (session->events.empty())
+		return nullptr;
 
+	session->start = std::make_shared<Glib::DateTime>(timestamp);
+	session->stop = this->stop;
+	session->target = this->target;
+
+	this->stop = std::make_shared<Glib::DateTime>(timestamp);
+
+	return session;
+}
