@@ -22,6 +22,8 @@
 
 #include <locale.h>
 
+#include <iostream>
+
 #include <giomm/file.h>
 #include <giomm/init.h>
 #include <glibmm/init.h>
@@ -35,7 +37,17 @@ int main(int argc, char **argv)
 	Glib::init();
 	Gio::init();
 
-	ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[1]), Gio::File::create_for_commandline_arg(argv[2]));
+	Glib::RefPtr<Gio::File> output_directory = Gio::File::create_for_commandline_arg(argv[2]);
+
+	if (output_directory->query_exists())
+	{
+		std::cerr << "Output directory must not exist." << std::endl;
+		return -1;
+	}
+
+	output_directory->make_directory();
+
+	ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[1]), output_directory);
 
 	operation.execute();
 
