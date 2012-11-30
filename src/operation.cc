@@ -26,6 +26,7 @@
 #include <glibmm/miscutils.h>
 
 #include "log_reader.hh"
+#include "log_writer.hh"
 #include "operation.hh"
 
 Operation::Operation(Glib::RefPtr<Gio::File> input_directory) :
@@ -48,6 +49,8 @@ void Operation::execute()
 
 		this->_handle_sessions(sessions);
 	}
+
+	this->_cleanup();
 }
 
 std::set<std::string> Operation::_get_input_filenames()
@@ -69,7 +72,51 @@ ConvertOperation::ConvertOperation(Glib::RefPtr<Gio::File> input_directory, Glib
 	_output_directory(output_directory)
 { }
 
+void ConvertOperation::_cleanup()
+{
+	this->_write_sessions();
+}
+
 void ConvertOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
 {
+	for (auto session : sessions)
+	{
+		while (session)
+		{
+			if (this->_sessions.size() > 0)
+			{
+				auto first_session = this->_sessions.front();
 
+				if (session->start->get_year() != first_session->start->get_year() || session->start->get_month() != first_session->start->get_month())
+					this->_write_sessions();
+			}
+
+			this->_sessions.push_back(session);
+
+			int year = session->start->get_year();
+			int month = session->start->get_month() + 1;
+
+			if (month == 13)
+			{
+				year++;
+				month = 1;
+			}
+
+			session = session->split(Glib::DateTime::create_utc(year, month, 1, 0, 0, 0));
+		}
+	}
+}
+
+void ConvertOperation::_write_sessions()
+{
+	LogWriter log_writer;
+
+	std::shared_ptr<Session> first_session = this->_sessions.front();
+
+	Glib::ustring output_filename(Glib::ustring::compose("%1-%2.log", first_session->target, first_session->start->format("%Y%m")));
+	Glib::RefPtr<Gio::File> output_file = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), output_filename));
+
+	log_writer.write(output_file, this->_sessions);
+
+	this->_sessions.clear();
 }

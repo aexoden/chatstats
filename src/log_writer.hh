@@ -20,50 +20,28 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_OPERATION_HH
-#define CHATSTATS_OPERATION_HH
+#ifndef CHATSTATS_LOG_WRITER_HH
+#define CHATSTATS_LOG_WRITER_HH
 
 #include <memory>
-#include <set>
-#include <string>
-#include <vector>
 
 #include <giomm/file.h>
+#include <glibmm/ustring.h>
 
 #include "session.hh"
 
-class Operation
+class LogWriter
 {
 	public:
-		Operation(Glib::RefPtr<Gio::File> input_directory);
+		const static Glib::ustring TIMESTAMP_FORMAT;
 
-		void execute();
-
-	protected:
-		Glib::RefPtr<Gio::File> _input_directory;
-
-		std::set<std::string> _get_input_filenames();
-
-		virtual void _cleanup() = 0;
-		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions) = 0;
-};
-
-class ConvertOperation : public Operation
-{
-	public:
-		ConvertOperation(Glib::RefPtr<Gio::File> input_directory, Glib::RefPtr<Gio::File> output_directory);
+		void write(Glib::RefPtr<Gio::File> file, std::vector<std::shared_ptr<Session>> sessions);
 
 	protected:
-		virtual void _cleanup();
-		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
-
-	private:
-		void _write_sessions();
-
-		Glib::RefPtr<Gio::File> _output_directory;
-
-		std::vector<std::shared_ptr<Session>> _sessions;
+		Glib::ustring _format_session_start(std::shared_ptr<const Glib::DateTime> timestamp);
+		Glib::ustring _format_session_stop(std::shared_ptr<const Glib::DateTime> timestamp);
+		Glib::ustring _format_session_target(const Glib::ustring & target);
 };
 
-#endif // CHATSTATS_OPERATION_HH
+#endif // CHATSTATS_LOG_WRITER_HH
 
