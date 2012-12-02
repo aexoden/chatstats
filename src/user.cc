@@ -27,3 +27,11 @@ User::User(const Glib::ustring & nick, const Glib::ustring & user, const Glib::u
 	user(user),
 	host(host)
 { }
+
+Glib::ustring User::to_string() const
+{
+	if (this->user.empty() || this->host.empty())
+		return this->nick;
+	else
+		return Glib::ustring::compose("%1!%2@%3", this->nick, this->user, this->host);
+}

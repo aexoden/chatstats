@@ -48,6 +48,9 @@ void LogWriter::write(Glib::RefPtr<Gio::File> file, std::vector<std::shared_ptr<
 		{
 			switch (event->type)
 			{
+				case EventType::MESSAGE:
+					file_stream->put_string(Glib::ustring::compose("%1\n", this->_format_message(event)).raw());
+					break;
 				default:
 					//std::cerr << "Unexpected event type: " << std::endl;
 					break;
@@ -73,4 +76,9 @@ Glib::ustring LogWriter::_format_session_stop(std::shared_ptr<const Glib::DateTi
 Glib::ustring LogWriter::_format_session_target(const Glib::ustring & target)
 {
 	return Glib::ustring::compose("Session Target: %1", target);
+}
+
+Glib::ustring LogWriter::_format_message(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] <%2> %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
 }

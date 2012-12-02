@@ -30,6 +30,8 @@ class User
 	public:
 		User(const Glib::ustring & nick, const Glib::ustring & user, const Glib::ustring & host);
 
+		Glib::ustring to_string() const;
+
 		const Glib::ustring nick;
 		const Glib::ustring user;
 		const Glib::ustring host;

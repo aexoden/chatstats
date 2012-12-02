@@ -41,6 +41,8 @@ class LogWriter
 		Glib::ustring _format_session_start(std::shared_ptr<const Glib::DateTime> timestamp);
 		Glib::ustring _format_session_stop(std::shared_ptr<const Glib::DateTime> timestamp);
 		Glib::ustring _format_session_target(const Glib::ustring & target);
+
+		Glib::ustring _format_message(const std::shared_ptr<const Event> & event);
 };
 
 #endif // CHATSTATS_LOG_WRITER_HH
