@@ -24,6 +24,8 @@
 
 #include "session.hh"
 
+#include <iostream>
+
 std::shared_ptr<Session> Session::split(const Glib::DateTime & timestamp)
 {
 	if (timestamp.to_unix() < this->start->to_unix() || timestamp.to_unix() > this->stop->to_unix())
@@ -32,7 +34,7 @@ std::shared_ptr<Session> Session::split(const Glib::DateTime & timestamp)
 	auto session = std::make_shared<Session>();
 
 	auto iter = this->events.begin();
-	while ((*iter)->timestamp->to_unix() < timestamp.to_unix())
+	while (iter != this->events.end() && (*iter)->timestamp->to_unix() < timestamp.to_unix())
 		iter++;
 
 	std::move(iter, this->events.end(), session->events.begin());

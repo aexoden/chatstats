@@ -228,6 +228,8 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 				}
 				else if (event->type == EventType::PARSE_SESSION_STOP)
 				{
+					session->stop = event->timestamp;
+
 					this->_iter++;
 					break;
 				}
@@ -257,6 +259,9 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 			session->start = session->events.front()->timestamp;
 		}
 
-		session->stop = session->events.back()->timestamp;
+		if (!session->stop)
+		{
+			session->stop = session->events.back()->timestamp;
+		}
 	}
 }
