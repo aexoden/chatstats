@@ -43,7 +43,16 @@ class LogWriter
 		Glib::ustring _format_session_target(const Glib::ustring & target);
 
 		Glib::ustring _format_action(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_ctcp(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_join(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_kick(const std::shared_ptr<const Event> & event);
 		Glib::ustring _format_message(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_mode_change(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_nick_change(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_notice(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_part(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_quit(const std::shared_ptr<const Event> & event);
+		Glib::ustring _format_topic_change(const std::shared_ptr<const Event> & event);
 };
 
 #endif // CHATSTATS_LOG_WRITER_HH

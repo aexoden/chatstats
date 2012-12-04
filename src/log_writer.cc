@@ -53,8 +53,35 @@ void LogWriter::write(Glib::RefPtr<Gio::File> file, std::vector<std::shared_ptr<
 				case EventType::ACTION:
 					message = this->_format_action(event);
 					break;
+				case EventType::CTCP:
+					message = this->_format_ctcp(event);
+					break;
+				case EventType::JOIN:
+					message = this->_format_join(event);
+					break;
+				case EventType::KICK:
+					message = this->_format_kick(event);
+					break;
 				case EventType::MESSAGE:
 					message = this->_format_message(event);
+					break;
+				case EventType::MODE_CHANGE:
+					message = this->_format_mode_change(event);
+					break;
+				case EventType::NICK_CHANGE:
+					message = this->_format_nick_change(event);
+					break;
+				case EventType::NOTICE:
+					message = this->_format_notice(event);
+					break;
+				case EventType::PART:
+					message = this->_format_part(event);
+					break;
+				case EventType::QUIT:
+					message = this->_format_quit(event);
+					break;
+				case EventType::TOPIC_CHANGE:
+					message = this->_format_topic_change(event);
 					break;
 				default:
 					continue;
@@ -89,7 +116,58 @@ Glib::ustring LogWriter::_format_action(const std::shared_ptr<const Event> & eve
 	return Glib::ustring::compose("[%1] * %2 %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
 }
 
+Glib::ustring LogWriter::_format_ctcp(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] [%2] %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_join(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] *** %2 joins", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string());
+}
+
+Glib::ustring LogWriter::_format_kick(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] *** %2 kicks %3 (%4)", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->object.to_string(), event->message);
+}
+
 Glib::ustring LogWriter::_format_message(const std::shared_ptr<const Event> & event)
 {
 	return Glib::ustring::compose("[%1] <%2> %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_mode_change(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] *** %2 sets mode: %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_nick_change(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] *** %2 is now known as %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->object.to_string());
+}
+
+Glib::ustring LogWriter::_format_notice(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] -%2- %3", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_part(const std::shared_ptr<const Event> & event)
+{
+	if (event->message.empty())
+		return Glib::ustring::compose("[%1] *** %2 parts", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string());
+	else
+		return Glib::ustring::compose("[%1] *** %2 parts (%3)", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_quit(const std::shared_ptr<const Event> & event)
+{
+	if (event->message.empty())
+		return Glib::ustring::compose("[%1] *** %2 quits", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string());
+	else
+		return Glib::ustring::compose("[%1] *** %2 quits (%3)", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
+}
+
+Glib::ustring LogWriter::_format_topic_change(const std::shared_ptr<const Event> & event)
+{
+	return Glib::ustring::compose("[%1] *** %2 changes topic to '%3'", event->timestamp->format(LogWriter::TIMESTAMP_FORMAT), event->subject.to_string(), event->message);
 }
