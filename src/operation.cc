@@ -111,12 +111,15 @@ void ConvertOperation::_write_sessions()
 {
 	LogWriter log_writer;
 
-	std::shared_ptr<Session> first_session = this->_sessions.front();
+	if (!this->_sessions.empty())
+	{
+		std::shared_ptr<Session> first_session = this->_sessions.front();
 
-	Glib::ustring output_filename(Glib::ustring::compose("%1-%2.log", first_session->target, first_session->start->format("%Y%m")));
-	Glib::RefPtr<Gio::File> output_file = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), output_filename));
+		Glib::ustring output_filename(Glib::ustring::compose("%1-%2.log", first_session->target, first_session->start->format("%Y%m")));
+		Glib::RefPtr<Gio::File> output_file = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), output_filename));
 
-	log_writer.write(output_file, this->_sessions);
+		log_writer.write(output_file, this->_sessions);
 
-	this->_sessions.clear();
+		this->_sessions.clear();
+	}
 }
