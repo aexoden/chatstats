@@ -25,23 +25,21 @@
 
 #include <glibmm/miscutils.h>
 
-#include "log_reader.hh"
 #include "log_writer.hh"
 #include "operation.hh"
 
-Operation::Operation(Glib::RefPtr<Gio::File> input_directory) :
-	_input_directory(input_directory)
+Operation::Operation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader) :
+	_input_directory(input_directory),
+	_reader(reader)
 { }
 
 void Operation::execute()
 {
-	LogReader log_reader;
-
 	for (const std::string & filename : this->_get_input_filenames())
 	{
-		auto sessions = log_reader.read(Gio::File::create_for_path(filename));
+		auto sessions = this->_reader->read(Gio::File::create_for_path(filename));
 
-		for (auto warning : log_reader.get_warnings())
+		for (auto warning : this->_reader->get_warnings())
 		{
 			auto filename_string = Glib::ustring::format(std::setw(30), Glib::ustring::compose("%1:%2", Glib::path_get_basename(filename), warning.first));
 			std::cerr << Glib::ustring::compose("%1: %2", filename_string, warning.second) << std::endl;
@@ -67,8 +65,8 @@ std::set<std::string> Operation::_get_input_filenames()
 	return filenames;
 }
 
-ConvertOperation::ConvertOperation(Glib::RefPtr<Gio::File> input_directory, Glib::RefPtr<Gio::File> output_directory) :
-	Operation(input_directory),
+ConvertOperation::ConvertOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory) :
+	Operation(input_directory, reader),
 	_output_directory(output_directory)
 { }
 

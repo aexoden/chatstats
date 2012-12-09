@@ -30,7 +30,7 @@
 
 #include "log_reader.hh"
 
-LogReader::LogReader()
+ChatstatsLogReader::ChatstatsLogReader()
 {
 	this->_regex_timestamp.push_back(Glib::Regex::create("^(?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2}) (?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2})(?P<offset>[0-9+-]{5})$"));
 
@@ -53,6 +53,11 @@ LogReader::LogReader()
 	this->_add_regex_event(EventType::NOTICE, "^\\[(?P<timestamp>[^\\]]*)\\] -(?P<subject_nick>[^ ]*)- (?P<message>.*)$");
 
 	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) kicks (?P<object_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
+}
+
+MircLogReader::MircLogReader()
+{
+
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)

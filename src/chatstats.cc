@@ -27,6 +27,9 @@
 #include <giomm/file.h>
 #include <giomm/init.h>
 #include <glibmm/init.h>
+#include <glibmm/optioncontext.h>
+#include <glibmm/optionentry.h>
+#include <glibmm/optiongroup.h>
 
 #include "operation.hh"
 
@@ -37,19 +40,64 @@ int main(int argc, char **argv)
 	Glib::init();
 	Gio::init();
 
-	Glib::RefPtr<Gio::File> output_directory = Gio::File::create_for_commandline_arg(argv[2]);
+	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
 
-	if (output_directory->query_exists())
+	Glib::OptionEntry entry;
+	Glib::ustring input_format = "chatstats";
+	entry.set_long_name("input-format");
+	entry.set_short_name('f');
+	entry.set_description("Format of logs in input directory");
+	option_group.add_entry(entry, input_format);
+
+	Glib::OptionContext option_context;
+	option_context.set_main_group(option_group);
+	option_context.parse(argc, argv);
+
+	if (argc < 3)
 	{
-		std::cerr << "Output directory must not exist." << std::endl;
+		std::cerr << "Insufficient number of arguments" << std::endl;
 		return -1;
 	}
 
-	output_directory->make_directory();
+	if (std::string(argv[1]) == "convert")
+	{
+		if (argc < 4)
+		{
+			std::cerr << "=" << std::endl;
+			return -1;
+		}
 
-	ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[1]), output_directory);
+		Glib::RefPtr<Gio::File> output_directory = Gio::File::create_for_commandline_arg(argv[3]);
 
-	operation.execute();
+		if (output_directory->query_exists())
+		{
+			std::cerr << "Output directory must not exist." << std::endl;
+			return -1;
+		}
+
+		output_directory->make_directory();
+
+		std::shared_ptr<LogReader> log_reader = nullptr;
+
+		if (input_format == "chatstats")
+			log_reader = std::make_shared<ChatstatsLogReader>();
+		else if (input_format == "mirc")
+			log_reader = std::make_shared<MircLogReader>();
+		else
+		{
+			std::cerr << "Invalid log format type. " << std::endl;
+			return -1;
+		}
+
+		ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader, output_directory);
+
+		operation.execute();
+	}
+	else
+	{
+		std::cerr << "Invalid mode." << std::endl;
+		return -1;
+	}
 
 	return 0;
 }

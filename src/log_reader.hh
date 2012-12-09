@@ -37,7 +37,7 @@
 class LogReader
 {
 	public:
-		LogReader();
+		virtual ~LogReader() { };
 
 		std::vector<std::shared_ptr<Session>> read(const Glib::RefPtr<Gio::File> & file);
 
@@ -46,6 +46,9 @@ class LogReader
 	protected:
 		std::vector<std::pair<EventType, Glib::RefPtr<Glib::Regex>>> _regex_event;
 		std::vector<Glib::RefPtr<Glib::Regex>> _regex_timestamp;
+
+	protected:
+		void _add_regex_event(EventType type, const Glib::ustring & regex_string);
 
 	private:
 		void _load_file_contents(const Glib::RefPtr<Gio::File> & file);
@@ -56,8 +59,6 @@ class LogReader
 
 		void _add_warning(const Glib::ustring & warning);
 
-		void _add_regex_event(EventType type, const Glib::ustring & regex_string);
-
 		void _parse_next_session(const std::shared_ptr<Session> & session);
 
 		std::vector<Glib::ustring> _lines;
@@ -67,6 +68,19 @@ class LogReader
 
 		std::multimap<int, Glib::ustring> _warnings;
 };
+
+class ChatstatsLogReader : public LogReader
+{
+	public:
+		ChatstatsLogReader();
+};
+
+class MircLogReader : public LogReader
+{
+	public:
+		MircLogReader();
+};
+
 
 #endif // CHATSTATS_LOG_READER_HH
 

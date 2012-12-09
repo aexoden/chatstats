@@ -30,17 +30,19 @@
 
 #include <giomm/file.h>
 
+#include "log_reader.hh"
 #include "session.hh"
 
 class Operation
 {
 	public:
-		Operation(Glib::RefPtr<Gio::File> input_directory);
+		Operation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader);
 
 		void execute();
 
 	protected:
 		Glib::RefPtr<Gio::File> _input_directory;
+		std::shared_ptr<LogReader> _reader;
 
 		std::set<std::string> _get_input_filenames();
 
@@ -51,7 +53,7 @@ class Operation
 class ConvertOperation : public Operation
 {
 	public:
-		ConvertOperation(Glib::RefPtr<Gio::File> input_directory, Glib::RefPtr<Gio::File> output_directory);
+		ConvertOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory);
 
 	protected:
 		virtual void _cleanup();
