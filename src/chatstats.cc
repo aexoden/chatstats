@@ -33,6 +33,17 @@
 
 #include "operation.hh"
 
+Glib::OptionEntry create_option_entry(const Glib::ustring & long_name, const gchar & short_name, const Glib::ustring & description)
+{
+	Glib::OptionEntry entry;
+
+	entry.set_long_name(long_name);
+	entry.set_short_name(short_name);
+	entry.set_description(description);
+
+	return entry;
+}
+
 int main(int argc, char **argv)
 {
 	setlocale(LC_ALL, "");
@@ -40,31 +51,31 @@ int main(int argc, char **argv)
 	Glib::init();
 	Gio::init();
 
-	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
-
-	Glib::OptionEntry entry;
 	Glib::ustring input_format = "chatstats";
-	entry.set_long_name("input-format");
-	entry.set_short_name('f');
-	entry.set_description("Format of logs in input directory");
-	option_group.add_entry(entry, input_format);
 
-	Glib::OptionContext option_context;
+	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
+	Glib::OptionEntry input_format_entry = create_option_entry("input-format", 'f', "Format of logs in input directory");
+	option_group.add_entry(input_format_entry, input_format);
+
+	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
+	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]");
 	option_context.parse(argc, argv);
 
 	if (argc < 3)
 	{
-		std::cerr << "Insufficient number of arguments" << std::endl;
-		return -1;
+		std::cout << option_context.get_help();
+		exit(EXIT_FAILURE);
 	}
 
-	if (std::string(argv[1]) == "convert")
+	Glib::ustring command(argv[1]);
+
+	if (command == "convert")
 	{
 		if (argc < 4)
 		{
-			std::cerr << "=" << std::endl;
-			return -1;
+			std::cout << option_context.get_help();
+			exit(EXIT_FAILURE);
 		}
 
 		Glib::RefPtr<Gio::File> output_directory = Gio::File::create_for_commandline_arg(argv[3]);
@@ -72,7 +83,7 @@ int main(int argc, char **argv)
 		if (output_directory->query_exists())
 		{
 			std::cerr << "Output directory must not exist." << std::endl;
-			return -1;
+			exit(EXIT_FAILURE);
 		}
 
 		output_directory->make_directory();
@@ -85,20 +96,18 @@ int main(int argc, char **argv)
 			log_reader = std::make_shared<MircLogReader>();
 		else
 		{
-			std::cerr << "Invalid log format type. " << std::endl;
-			return -1;
+			std::cerr << "Invalid log format: " << input_format << std::endl;
+			exit(EXIT_FAILURE);
 		}
 
 		ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader, output_directory);
-
 		operation.execute();
 	}
 	else
 	{
-		std::cerr << "Invalid mode." << std::endl;
-		return -1;
+		std::cout << option_context.get_help();
+		exit(EXIT_FAILURE);
 	}
 
 	return 0;
 }
-
