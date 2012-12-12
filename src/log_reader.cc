@@ -57,7 +57,29 @@ ChatstatsLogReader::ChatstatsLogReader()
 
 MircLogReader::MircLogReader()
 {
+	this->_regex_timestamp.push_back(Glib::Regex::create("^[A-Za-z]+ (?P<textmonth>[A-Za-z]+) (?P<day>[0-9]{1,2}) (?P<hour>[0-9]{2}):(?P<minute>[0-9]{2}):(?P<second>[0-9]{2}) (?P<year>[0-9]{4})$"));
+	this->_regex_timestamp.push_back(Glib::Regex::create("((?P<year>[0-9]{4})-(?P<month>[0-9]{2})-(?P<day>[0-9]{2}) )?(?P<hour>[0-9]{2}):(?P<minute>[0-9]{2})(:(?P<second>[0-9]{2}))?(?P<offset>[0-9+-]{5})?"));
 
+	this->_add_regex_event(EventType::MESSAGE, "^\\[(?P<timestamp>[^\\]]*)\\] <(?P<subject_nick>[^ ]*)> (?P<message>.*)$");
+
+	this->_add_regex_event(EventType::JOIN, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) \\((?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*)\\) has joined .*$");
+	this->_add_regex_event(EventType::PART, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) \\((?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*)\\) has left .*(\\((?P<message>.*)\\))?$");
+	this->_add_regex_event(EventType::QUIT, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) \\((?P<subject_user>[^ ]*)@(?P<subject_host>[^ ]*)\\) Quit( \\((?P<message>.*)\\))?$");
+
+	this->_add_regex_event(EventType::ACTION, "^\\[(?P<timestamp>[^\\]]*)\\] \\* (?P<subject_nick>[^ ]*) ?(?P<message>.*)$");
+
+	this->_add_regex_event(EventType::NICK_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) is now known as (?P<object_nick>[^ ]*)$");
+	this->_add_regex_event(EventType::MODE_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) sets mode: (?P<message>.*)$");
+	this->_add_regex_event(EventType::TOPIC_CHANGE, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<subject_nick>[^ ]*) changes topic to '(?P<message>.*)'$");
+
+	this->_add_regex_event(EventType::PARSE_IGNORE, "^Session Close: .*$");
+	this->_add_regex_event(EventType::PARSE_SESSION_START, "^Session Start: (?P<timestamp>.*)$");
+	this->_add_regex_event(EventType::PARSE_SESSION_TARGET, "^Session Ident: (?P<message>.*)$");
+
+	this->_add_regex_event(EventType::CTCP, "^\\[(?P<timestamp>[^\\]]*)\\] \\[(?P<subject_nick>[^ ]*):[^ ]* (?P<message>[^\\]]*)\\]( (?P<message_extra>.*))?$");
+	this->_add_regex_event(EventType::NOTICE, "^\\[(?P<timestamp>[^\\]]*)\\] -(?P<subject_nick>[^ ]*):[^ ]*- (?P<message>.*)$");
+
+	this->_add_regex_event(EventType::KICK, "^\\[(?P<timestamp>[^\\]]*)\\] \\*\\*\\* (?P<object_nick>[^ ]*) was kicked by (?P<subject_nick>[^ ]*)( \\((?P<message>.*)\\))?$");
 }
 
 std::vector<std::shared_ptr<Session>> LogReader::read(const Glib::RefPtr<Gio::File> & file)
