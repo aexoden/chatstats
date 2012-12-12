@@ -139,7 +139,12 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 			User subject(match_info.fetch_named("subject_nick"), match_info.fetch_named("subject_user"), match_info.fetch_named("subject_host"));
 			User object(match_info.fetch_named("object_nick"), match_info.fetch_named("object_user"), match_info.fetch_named("object_host"));
 
-			return std::make_shared<const Event>(regex.first, timestamp, subject, object, match_info.fetch_named("message"));
+			Glib::ustring message = match_info.fetch_named("message");
+
+			if (match_info.fetch_named("message_extra") != "")
+				message = Glib::ustring::compose("\1 \2", message, match_info.fetch_named("message_extra"));
+
+			return std::make_shared<const Event>(regex.first, timestamp, subject, object, message);
 		}
 	}
 
