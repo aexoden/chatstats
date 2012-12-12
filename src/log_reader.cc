@@ -130,7 +130,7 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 		{
 			std::shared_ptr<const Glib::DateTime> timestamp = this->_parse_timestamp(match_info.fetch_named("timestamp"));
 
-			if (!timestamp && regex.first != EventType::PARSE_SESSION_TARGET)
+			if (!timestamp && regex.first != EventType::PARSE_SESSION_TARGET && regex.first != EventType::PARSE_IGNORE)
 			{
 				this->_add_warning("Invalid or missing timestamp");
 				return nullptr;
@@ -267,6 +267,10 @@ void LogReader::_parse_next_session(const std::shared_ptr<Session> & session)
 						session->target = event->message.lowercase();
 					else if (session->target != event->message.lowercase())
 						this->_add_warning("Multiple session targets defined");
+				}
+				else if (event->type == EventType::PARSE_IGNORE)
+				{
+
 				}
 				else
 				{
