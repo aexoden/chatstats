@@ -163,7 +163,7 @@ std::shared_ptr<const Glib::DateTime> LogReader::_parse_timestamp(const Glib::us
 			{
 				previous_timestamp = this->_current_timestamp->to_timezone(timezone);
 			}
-			else if (match_info.fetch_named("year").empty() || match_info.fetch_named("month").empty() || match_info.fetch_named("day").empty())
+			else if (match_info.fetch_named("year").empty() || (match_info.fetch_named("month").empty() && match_info.fetch_named("textmonth").empty()) || match_info.fetch_named("day").empty())
 			{
 				this->_add_warning("Partial timestamp used before complete timestamp");
 				return nullptr;
@@ -175,6 +175,29 @@ std::shared_ptr<const Glib::DateTime> LogReader::_parse_timestamp(const Glib::us
 			int hour = this->_parse_timestamp_int(match_info.fetch_named("hour"), previous_timestamp.get_hour());
 			int minute = this->_parse_timestamp_int(match_info.fetch_named("minute"), previous_timestamp.get_minute());
 			int second = this->_parse_timestamp_int(match_info.fetch_named("second"), previous_timestamp.get_second());
+
+			Glib::ustring textmonth = match_info.fetch_named("textmonth");
+
+			if (textmonth != "")
+			{
+				if (textmonth == "Jan") month = 1;
+				else if (textmonth == "Feb") month = 2;
+				else if (textmonth == "Mar") month = 3;
+				else if (textmonth == "Apr") month = 4;
+				else if (textmonth == "May") month = 5;
+				else if (textmonth == "Jun") month = 6;
+				else if (textmonth == "Jul") month = 7;
+				else if (textmonth == "Aug") month = 8;
+				else if (textmonth == "Sep") month = 9;
+				else if (textmonth == "Oct") month = 10;
+				else if (textmonth == "Nov") month = 11;
+				else if (textmonth == "Dec") month = 12;
+				else
+				{
+					this->_add_warning(Glib::ustring::compose("Invalid month name in timestamp: %1", textmonth));
+					return nullptr;
+				}
+			}
 
 			auto timestamp = std::make_shared<const Glib::DateTime>(Glib::DateTime::create(timezone, year, month, day, hour, minute, second).to_utc());
 
