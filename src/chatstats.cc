@@ -59,12 +59,24 @@ int main(int argc, char **argv)
 
 	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
-	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]");
+	option_context.set_summary("Commands:\n  count [INPUT-DIRECTORY]\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]");
 	option_context.parse(argc, argv);
 
 	if (argc < 3)
 	{
 		std::cout << option_context.get_help();
+		exit(EXIT_FAILURE);
+	}
+
+	std::shared_ptr<LogReader> log_reader = nullptr;
+
+	if (input_format == "chatstats")
+		log_reader = std::make_shared<ChatstatsLogReader>();
+	else if (input_format == "mirc")
+		log_reader = std::make_shared<MircLogReader>();
+	else
+	{
+		std::cerr << "Invalid log format: " << input_format << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -88,19 +100,12 @@ int main(int argc, char **argv)
 
 		output_directory->make_directory();
 
-		std::shared_ptr<LogReader> log_reader = nullptr;
-
-		if (input_format == "chatstats")
-			log_reader = std::make_shared<ChatstatsLogReader>();
-		else if (input_format == "mirc")
-			log_reader = std::make_shared<MircLogReader>();
-		else
-		{
-			std::cerr << "Invalid log format: " << input_format << std::endl;
-			exit(EXIT_FAILURE);
-		}
-
 		ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader, output_directory);
+		operation.execute();
+	}
+	else if (command == "count")
+	{
+		CountOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader);
 		operation.execute();
 	}
 	else

@@ -121,3 +121,37 @@ void ConvertOperation::_write_sessions()
 		this->_sessions.clear();
 	}
 }
+
+CountOperation::CountOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader) :
+	Operation(input_directory, reader)
+{ }
+
+void CountOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
+{
+	for (auto session : sessions)
+	{
+		for (auto event : session->events)
+		{
+			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
+			{
+				Glib::ustring date = event->timestamp->format("%Y-%m-%d");
+
+				if (date != this->_current_date)
+				{
+					if (this->_current_date != "")
+						std::cout << this->_current_date << "\t" << this->_count << std::endl;
+
+					this->_current_date = date;
+					this->_count = 0;
+				}
+
+				this->_count++;
+			}
+		}
+	}
+}
+
+void CountOperation::_cleanup()
+{
+	std::cout << this->_current_date << "\t" << this->_count << std::endl;
+}

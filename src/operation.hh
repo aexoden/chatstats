@@ -29,6 +29,7 @@
 #include <vector>
 
 #include <giomm/file.h>
+#include <glibmm/ustring.h>
 
 #include "log_reader.hh"
 #include "session.hh"
@@ -65,6 +66,20 @@ class ConvertOperation : public Operation
 		Glib::RefPtr<Gio::File> _output_directory;
 
 		std::vector<std::shared_ptr<Session>> _sessions;
+};
+
+class CountOperation : public Operation
+{
+	public:
+		CountOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader);
+
+	protected:
+		virtual void _cleanup();
+		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+
+	private:
+		Glib::ustring _current_date;
+		int _count;
 };
 
 #endif // CHATSTATS_OPERATION_HH
