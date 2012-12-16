@@ -82,5 +82,24 @@ class CountOperation : public Operation
 		int _count;
 };
 
+class CoverageOperation : public Operation
+{
+	public:
+		CoverageOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader);
+
+	protected:
+		virtual void _cleanup();
+		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+
+	private:
+		std::shared_ptr<const Glib::DateTime> _start;
+		std::shared_ptr<const Glib::DateTime> _stop;
+
+		std::set<std::pair<Glib::TimeSpan, std::pair<std::shared_ptr<const Glib::DateTime>, std::shared_ptr<const Glib::DateTime>>>> _gaps;
+
+		Glib::TimeSpan _covered;
+		std::shared_ptr<const Glib::DateTime> _last_stop;
+};
+
 #endif // CHATSTATS_OPERATION_HH
 

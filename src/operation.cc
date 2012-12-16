@@ -155,3 +155,63 @@ void CountOperation::_cleanup()
 {
 	std::cout << this->_current_date << "\t" << this->_count << std::endl;
 }
+
+CoverageOperation::CoverageOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader) :
+	Operation(input_directory, reader),
+	_covered(0)
+{ }
+
+void CoverageOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
+{
+	for (auto session : sessions)
+	{
+		if (!this->_start || session->start->to_unix() < this->_start->to_unix())
+			this->_start = session->start;
+
+		if (!this->_stop || session->stop->to_unix() > this->_stop->to_unix())
+			this->_stop = session->stop;
+
+		if (this->_last_stop)
+			this->_gaps.insert(std::make_pair(session->start->difference(*(this->_last_stop)), std::make_pair(this->_last_stop, session->start)));
+
+		this->_last_stop = session->stop;
+		this->_covered += session->stop->difference(*(session->start));
+	}
+}
+
+Glib::ustring _format_timespan(Glib::TimeSpan timespan)
+{
+	timespan /= 1000000;
+
+	int seconds = timespan % 60;
+	int minutes = (timespan / 60) % 60;
+	int hours = (timespan / 3600) % 24;
+	int days = timespan / 86400;
+
+	return Glib::ustring::compose("%1 days, %2 hours, %3 minutes and %4 seconds", days, hours, minutes, seconds);
+}
+
+void CoverageOperation::_cleanup()
+{
+	Glib::TimeSpan total = this->_stop->difference(*(this->_start));
+
+	std::cout << "Log Coverage Report" << std::endl << std::endl;
+
+	std::cout << "Logs span from " << this->_start->format("%Y-%m-%d %H:%M:%S") << " to " << this->_stop->format("%Y-%m-%d %H:%M:%S") << std::endl;
+	std::cout << "  spanning a period of " << _format_timespan(total) << "." << std::endl << std::endl;
+
+	std::cout << "Logged sessions cover a period of " << _format_timespan(this->_covered) << ", for a coverage rate of " << (this->_covered * 100.0 / total) << "%" << std::endl << std::endl;
+
+	std::cout << "Longest Gaps in Coverage:" << std::endl;
+
+	auto iter = this->_gaps.rbegin();
+
+	for (int i = 0; i < 10; i++)
+	{
+		auto gap = *iter;
+
+		std::cout << "  " << gap.second.first->format("%Y-%m-%d %H:%M:%S") << " to " << gap.second.second->format("%Y-%m-%d %H:%M:%S") << "\t" << _format_timespan(gap.first) << std::endl;
+
+		iter++;
+	}
+}

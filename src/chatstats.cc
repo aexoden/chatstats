@@ -59,7 +59,7 @@ int main(int argc, char **argv)
 
 	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
-	option_context.set_summary("Commands:\n  count [INPUT-DIRECTORY]\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]");
+	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]\n  count [INPUT-DIRECTORY]\n  coverage [INPUT-DIRECTORY]");
 	option_context.parse(argc, argv);
 
 	if (argc < 3)
@@ -67,6 +67,8 @@ int main(int argc, char **argv)
 		std::cout << option_context.get_help();
 		exit(EXIT_FAILURE);
 	}
+
+	Glib::RefPtr<Gio::File> input_directory = Gio::File::create_for_commandline_arg(argv[2]);
 
 	std::shared_ptr<LogReader> log_reader = nullptr;
 
@@ -100,12 +102,17 @@ int main(int argc, char **argv)
 
 		output_directory->make_directory();
 
-		ConvertOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader, output_directory);
+		ConvertOperation operation(input_directory, log_reader, output_directory);
 		operation.execute();
 	}
 	else if (command == "count")
 	{
-		CountOperation operation(Gio::File::create_for_commandline_arg(argv[2]), log_reader);
+		CountOperation operation(input_directory, log_reader);
+		operation.execute();
+	}
+	else if (command == "coverage")
+	{
+		CoverageOperation operation(input_directory, log_reader);
 		operation.execute();
 	}
 	else
