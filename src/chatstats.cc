@@ -30,6 +30,7 @@
 #include <glibmm/optioncontext.h>
 #include <glibmm/optionentry.h>
 #include <glibmm/optiongroup.h>
+#include <glibmm/stringutils.h>
 
 #include "operation.hh"
 
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
 
 	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
-	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]\n  count [INPUT-DIRECTORY]\n  coverage [INPUT-DIRECTORY]");
+	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]\n  count [INPUT-DIRECTORY]\n  coverage [INPUT-DIRECTORY]\n  frequency [INPUT-DIRECTORY] [TARGET]");
 	option_context.parse(argc, argv);
 
 	if (argc < 3)
@@ -113,6 +114,19 @@ int main(int argc, char **argv)
 	else if (command == "coverage")
 	{
 		CoverageOperation operation(input_directory, log_reader);
+		operation.execute();
+	}
+	else if (command == "frequency")
+	{
+		if (argc < 4)
+		{
+			std::cout << option_context.get_help();
+			exit(EXIT_FAILURE);
+		}
+
+		double target = Glib::Ascii::strtod(argv[3]);
+
+		FrequencyOperation operation(input_directory, log_reader, target);
 		operation.execute();
 	}
 	else

@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include <cmath>
 #include <iomanip>
 #include <iostream>
 
@@ -213,5 +214,77 @@ void CoverageOperation::_cleanup()
 		std::cout << "  " << gap.second.first->format("%Y-%m-%d %H:%M:%S") << " to " << gap.second.second->format("%Y-%m-%d %H:%M:%S") << "\t" << _format_timespan(gap.first) << std::endl;
 
 		iter++;
+	}
+}
+
+FrequencyOperation::FrequencyOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, double target) :
+	Operation(input_directory, reader),
+	_target(target)
+{ }
+
+std::deque<Glib::ustring> _tokenize(const Glib::ustring & message)
+{
+	return Glib::Regex::create("\\P{Ll}")->split(message.lowercase());
+}
+
+void FrequencyOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
+{
+	for (auto session : sessions)
+	{
+		if (!this->_start)
+			this->_start = session->start;
+
+		if (!this->_stop || session->stop->to_unix() > this->_stop->to_unix())
+			this->_stop = session->stop;
+
+		for (auto event : session->events)
+		{
+			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
+			{
+				for (auto token : _tokenize(event->message))
+				{
+					if (token != "")
+					{
+						if (!this->_last[token])
+							this->_last[token] = this->_start;
+
+						int gap = event->timestamp->difference(*(this->_last[token])) / 1000000;
+
+						if (gap > this->_max[token])
+							this->_max[token] = gap;
+
+						if (this->_min[token] == 0 || gap < this->_min[token])
+							this->_min[token] = gap;
+
+						this->_count[token]++;
+						this->_last[token] = event->timestamp;
+					}
+				}
+			}
+		}
+	}
+}
+
+void FrequencyOperation::_cleanup()
+{
+	double total_time = static_cast<double>(this->_stop->difference(*(this->_start))) / 1000000;
+
+	std::set<std::pair<double, Glib::ustring>> scores;
+
+	for (auto pair : this->_count)
+	{
+		Glib::ustring token = pair.first;
+		double average = total_time / pair.second;
+
+		double score = abs(average - this->_target);
+
+		if (this->_max[token] < this->_target * 8.0)
+			scores.insert(std::make_pair(score, token));
+	}
+
+	for (auto pair : scores)
+	{
+		std::cout << std::fixed << std::setprecision(5);
+		std::cout << std::setw(30) << pair.second << "\t" << pair.first << "\t" << this->_count[pair.second] << "\t" << (total_time / this->_count[pair.second]) << "\t" << this->_min[pair.second] << "\t" << this->_max[pair.second] << std::endl;
 	}
 }

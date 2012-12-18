@@ -26,6 +26,7 @@
 #include <memory>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <giomm/file.h>
@@ -99,6 +100,27 @@ class CoverageOperation : public Operation
 
 		Glib::TimeSpan _covered;
 		std::shared_ptr<const Glib::DateTime> _last_stop;
+};
+
+class FrequencyOperation : public Operation
+{
+	public:
+		FrequencyOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, double target);
+
+	protected:
+		virtual void _cleanup();
+		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+
+	private:
+		double _target;
+
+		std::unordered_map<std::string, std::shared_ptr<const Glib::DateTime>> _last;
+		std::unordered_map<std::string, int> _max;
+		std::unordered_map<std::string, int> _min;
+		std::unordered_map<std::string, int> _count;
+
+		std::shared_ptr<const Glib::DateTime> _start;
+		std::shared_ptr<const Glib::DateTime> _stop;
 };
 
 #endif // CHATSTATS_OPERATION_HH
