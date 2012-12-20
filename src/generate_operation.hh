@@ -45,6 +45,7 @@ class GenerateOperation : public Operation
 		Glib::RefPtr<Gio::File> _output_directory;
 		Glib::ustring _target;
 
+		std::unordered_map<std::string, int> _nick_action_counts;
 		std::unordered_map<std::string, int> _nick_message_counts;
 };
 

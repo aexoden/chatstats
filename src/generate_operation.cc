@@ -57,18 +57,18 @@ void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> 
 void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream)
 {
 	output_stream->put_string("<table>\n");
-	output_stream->put_string("<tr><th>Rank</th><th>Nickname</th><th>Messages</th></tr>\n");
+	output_stream->put_string("<tr><th>Rank</th><th>Nickname</th><th>Lines</th></tr>\n");
 
-	std::set<std::pair<int, Glib::ustring>> nick_message_counts;
+	std::set<std::pair<int, Glib::ustring>> nick_line_counts;
 
 	for (auto pair : this->_nick_message_counts)
-		nick_message_counts.insert(std::make_pair(-pair.second, pair.first));
+		nick_line_counts.insert(std::make_pair(-pair.second - this->_nick_action_counts[pair.first], pair.first));
 
 	unsigned int count = 0;
 	unsigned int rank = 0;
 	unsigned int last_score = 0;
 
-	for (auto pair : nick_message_counts)
+	for (auto pair : nick_line_counts)
 	{
 		unsigned int score = -pair.first;
 
@@ -86,8 +86,8 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 	output_stream->put_string("</table>\n");
 
-	if (count < nick_message_counts.size())
-		output_stream->put_string(Glib::ustring::compose("<p>Plus %1 others who obviously weren't important enough for the table</p>\n", nick_message_counts.size() - count));
+	if (count < nick_line_counts.size())
+		output_stream->put_string(Glib::ustring::compose("<p>Plus %1 others who obviously weren't important enough for the table</p>\n", nick_line_counts.size() - count));
 }
 
 void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
@@ -101,6 +101,9 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 		{
 			if (event->type == EventType::MESSAGE)
 				this->_nick_message_counts[event->subject.nick]++;
+
+			if (event->type == EventType::ACTION)
+				this->_nick_action_counts[event->subject.nick]++;
 		}
 	}
 }
