@@ -40,6 +40,8 @@ class GenerateOperation : public Operation
 		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 
+		void _output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+
 		Glib::RefPtr<Gio::File> _output_directory;
 		Glib::ustring _target;
 

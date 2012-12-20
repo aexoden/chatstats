@@ -38,6 +38,24 @@ void GenerateOperation::_cleanup()
 
 	this->_output_html_header(output_stream);
 
+	this->_output_section_overall_ranking(output_stream);
+
+	this->_output_html_footer(output_stream);
+}
+
+void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+{
+	output_stream->put_string(Glib::ustring::compose("<!DOCTYPE html>\n<html>\n<head>\n<title>%1 Statistics</title>\n", this->_target));
+	output_stream->put_string("</head>\n<body>\n");
+}
+
+void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+{
+	output_stream->put_string("</body>\n</html>\n");
+}
+
+void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+{
 	output_stream->put_string("<table>\n");
 	output_stream->put_string("<tr><th>Rank</th><th>Nickname</th><th>Messages</th></tr>\n");
 
@@ -70,19 +88,6 @@ void GenerateOperation::_cleanup()
 
 	if (count < nick_message_counts.size())
 		output_stream->put_string(Glib::ustring::compose("<p>Plus %1 others who obviously weren't important enough for the table</p>\n", nick_message_counts.size() - count));
-
-	this->_output_html_footer(output_stream);
-}
-
-void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream)
-{
-	output_stream->put_string(Glib::ustring::compose("<!DOCTYPE html>\n<html>\n<head>\n<title>%1 Statistics</title>\n", this->_target));
-	output_stream->put_string("</head>\n<body>\n");
-}
-
-void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream)
-{
-	output_stream->put_string("</body>\n</html>\n");
 }
 
 void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
