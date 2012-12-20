@@ -32,6 +32,7 @@
 #include <glibmm/optiongroup.h>
 #include <glibmm/stringutils.h>
 
+#include "generate_operation.hh"
 #include "operation.hh"
 
 Glib::OptionEntry create_option_entry(const Glib::ustring & long_name, const gchar & short_name, const Glib::ustring & description)
@@ -60,7 +61,7 @@ int main(int argc, char **argv)
 
 	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
-	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]\n  count [INPUT-DIRECTORY]\n  coverage [INPUT-DIRECTORY]\n  frequency [INPUT-DIRECTORY] [TARGET]");
+	option_context.set_summary("Commands:\n  convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]\n  count [INPUT-DIRECTORY]\n  coverage [INPUT-DIRECTORY]\n  frequency [INPUT-DIRECTORY] [TARGET]\n  generate [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]");
 	option_context.parse(argc, argv);
 
 	if (argc < 3)
@@ -127,6 +128,27 @@ int main(int argc, char **argv)
 		double target = Glib::Ascii::strtod(argv[3]);
 
 		FrequencyOperation operation(input_directory, log_reader, target);
+		operation.execute();
+	}
+	else if (command == "generate")
+	{
+		if (argc < 4)
+		{
+			std::cout << option_context.get_help();
+			exit(EXIT_FAILURE);
+		}
+
+		Glib::RefPtr<Gio::File> output_directory = Gio::File::create_for_commandline_arg(argv[3]);
+
+		if (output_directory->query_exists())
+		{
+			std::cerr << "Output directory must not exist." << std::endl;
+			exit(EXIT_FAILURE);
+		}
+
+		output_directory->make_directory();
+
+		GenerateOperation operation(input_directory, log_reader, output_directory);
 		operation.execute();
 	}
 	else
