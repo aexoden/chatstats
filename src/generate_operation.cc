@@ -22,7 +22,6 @@
 
 #include <iostream>
 
-#include <giomm/dataoutputstream.h>
 #include <glibmm/miscutils.h>
 
 #include "generate_operation.hh"
@@ -37,7 +36,9 @@ void GenerateOperation::_cleanup()
 	Glib::RefPtr<Gio::File> output_file = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), "index.html"));
 	Glib::RefPtr<Gio::DataOutputStream> output_stream = Gio::DataOutputStream::create(output_file->create_file());
 
-	output_stream->put_string("<html><head></head><body><table>\n");
+	this->_output_html_header(output_stream);
+
+	output_stream->put_string("<table>\n");
 	output_stream->put_string("<tr><th>Rank</th><th>Nickname</th><th>Messages</th></tr>\n");
 
 	std::set<std::pair<int, Glib::ustring>> nick_message_counts;
@@ -70,13 +71,27 @@ void GenerateOperation::_cleanup()
 	if (count < nick_message_counts.size())
 		output_stream->put_string(Glib::ustring::compose("<p>Plus %1 others who obviously weren't important enough for the table</p>\n", nick_message_counts.size() - count));
 
-	output_stream->put_string("</body></html>\n");
+	this->_output_html_footer(output_stream);
+}
+
+void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+{
+	output_stream->put_string(Glib::ustring::compose("<!DOCTYPE html>\n<html>\n<head>\n<title>%1 Statistics</title>\n", this->_target));
+	output_stream->put_string("</head>\n<body>\n");
+}
+
+void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+{
+	output_stream->put_string("</body>\n</html>\n");
 }
 
 void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
 {
 	for (auto session : sessions)
 	{
+		if (this->_target.empty())
+			this->_target = session->target;
+
 		for (auto event : session->events)
 		{
 			if (event->type == EventType::MESSAGE)

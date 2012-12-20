@@ -23,6 +23,8 @@
 #ifndef CHATSTATS_GENERATE_OPERATION_HH
 #define CHATSTATS_GENERATE_OPERATION_HH
 
+#include <giomm/dataoutputstream.h>
+
 #include "operation.hh"
 
 class GenerateOperation : public Operation
@@ -35,7 +37,11 @@ class GenerateOperation : public Operation
 		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
 
 	private:
+		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+
 		Glib::RefPtr<Gio::File> _output_directory;
+		Glib::ustring _target;
 
 		std::unordered_map<std::string, int> _nick_message_counts;
 };
