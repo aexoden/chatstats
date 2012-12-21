@@ -37,6 +37,8 @@ class GenerateOperation : public Operation
 		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
 
 	private:
+		void _output_css_default();
+
 		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 
