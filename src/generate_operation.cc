@@ -72,7 +72,7 @@ void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> 
 	output_stream->put_string(Glib::ustring::compose("\t\t<title>%1 Statistics</title>\n", this->_target));
 	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/blueprint/screen.css\" media=\"screen, projection\">\n");
 	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/blueprint/print.css\" media=\"print\">\n");
-	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/default.css\"\n");
+	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/default.css\">\n");
 	output_stream->put_string("\t</head>\n");
 	output_stream->put_string("\t<body>\n");
 	output_stream->put_string("\t\t<div id=\"header\">\n");
