@@ -69,8 +69,9 @@ directory, so you should add these files after the HTML is generated.
 
 ### Options
 
-There is currently only one option available, which controls the format the
-input logs are in. chatstats currently supports two input formats:
+There is currently only one option available: `--input-format`, which controls
+the format the input logs are in. chatstats currently supports two input
+formats:
 
 #### chatstats
 
