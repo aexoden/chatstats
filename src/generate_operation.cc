@@ -43,6 +43,27 @@ void GenerateOperation::_cleanup()
 	this->_output_html_footer(output_stream);
 }
 
+void _encode_char(Glib::ustring & string, char search, const Glib::ustring & replace)
+{
+	size_t pos = 0;
+
+	while ((pos = string.find(search, pos)) != std::string::npos)
+	{
+		string.replace(pos, 1, replace);
+		pos += replace.length();
+	}
+}
+
+Glib::ustring _encode_html_chars(Glib::ustring string)
+{
+	_encode_char(string, '&', "&amp;");
+	_encode_char(string, '<', "&lt;");
+	_encode_char(string, '>', "&gt;");
+	_encode_char(string, '"', "&quot;");
+
+	return string;
+}
+
 void GenerateOperation::_output_css_default()
 {
 	Glib::RefPtr<Gio::File> css_directory = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), "css"));
@@ -119,7 +140,7 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 		last_score = score;
 
-		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td>%2</td><td>%3</td></tr>\n", rank, pair.second, score));
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td>%2</td><td>%3</td></tr>\n", rank, _encode_html_chars(pair.second), score));
 		count++;
 	}
 
