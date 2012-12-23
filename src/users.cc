@@ -27,6 +27,52 @@
 
 #include "users.hh"
 
+Glib::ustring UserStats::get_display_name()
+{
+	int max_line_count = -1;
+	Glib::ustring best_nick = "";
+
+	for (auto nick : this->_nicks)
+	{
+		int line_count = this->_message_count[nick] + this->_action_count[nick];
+
+		if (line_count > max_line_count)
+		{
+			max_line_count = line_count;
+			best_nick = nick;
+		}
+	}
+
+	return best_nick;
+}
+
+int UserStats::get_line_count()
+{
+	int line_count = 0;
+
+	for (auto nick : this->_nicks)
+		line_count += this->_message_count[nick] + this->_action_count[nick];
+
+	return line_count;
+}
+
+void UserStats::add_nick(const Glib::ustring & nick)
+{
+	this->_nicks.insert(nick);
+}
+
+void UserStats::increment_message_count(const Glib::ustring & nick)
+{
+	this->add_nick(nick);
+	this->_message_count[nick]++;
+}
+
+void UserStats::increment_action_count(const Glib::ustring & nick)
+{
+	this->add_nick(nick);
+	this->_action_count[nick]++;
+}
+
 Users::Users(Glib::RefPtr<Gio::File> users_file)
 {
 	if (!users_file)
@@ -35,7 +81,7 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 	auto users_stream = Gio::DataInputStream::create(users_file->read());
 	std::string line;
 
-	auto nick_group = std::make_shared<std::set<Glib::ustring>>();
+	auto user = std::make_shared<UserStats>();
 
 	while (users_stream->read_line(line))
 	{
@@ -45,27 +91,34 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 
 			if (tokens[0] == "USER")
 			{
-				if (!nick_group->empty())
-					this->_nick_groups.push_back(nick_group);
-
-				nick_group = std::make_shared<std::set<Glib::ustring>>();
+				user = std::make_shared<UserStats>();
 			}
 			else if (tokens[0] == "NICK")
 			{
 				for (size_t i = 1; i < tokens.size(); i++)
 				{
 					if (!tokens[i].empty())
-						nick_group->insert(tokens[i]);
+						this->_users[tokens[i]] = user;
 				}
 			}
 		}
 	}
-
-	if (!nick_group->empty())
-		this->_nick_groups.push_back(nick_group);
 }
 
-std::deque<std::shared_ptr<std::set<Glib::ustring>>> Users::get_nick_groups()
+std::set<std::shared_ptr<UserStats>> Users::get_users()
 {
-	return this->_nick_groups;
+	std::set<std::shared_ptr<UserStats>> users;
+
+	for (auto pair : this->_users)
+		users.insert(pair.second);
+
+	return users;
+}
+
+std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick)
+{
+	if (this->_users.count(nick) == 0)
+		this->_users[nick] = std::make_shared<UserStats>();
+
+	return this->_users[nick];
 }

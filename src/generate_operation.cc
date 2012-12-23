@@ -45,6 +45,26 @@ void GenerateOperation::_cleanup()
 	this->_output_html_footer(output_stream);
 }
 
+void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
+{
+	for (auto session : sessions)
+	{
+		if (this->_target.empty())
+			this->_target = session->target;
+
+		for (auto event : session->events)
+		{
+			auto user = this->_users.get_user(event->subject.nick);
+
+			if (event->type == EventType::MESSAGE)
+				user->increment_message_count(event->subject.nick);
+
+			if (event->type == EventType::ACTION)
+				user->increment_action_count(event->subject.nick);
+		}
+	}
+}
+
 void _encode_char(Glib::ustring & string, char search, const Glib::ustring & replace)
 {
 	size_t pos = 0;
@@ -121,50 +141,12 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 	output_stream->put_string("\t\t\t<table>\n");
 	output_stream->put_string("\t\t\t\t<tr><th>Rank</th><th>Nickname</th><th>Lines</th></tr>\n");
 
-	std::unordered_map<std::string, int> nick_line_counts;
-
-	for (auto pair : this->_nick_message_counts)
-		nick_line_counts[pair.first] += pair.second;
-
-	for (auto pair : this->_nick_action_counts)
-		nick_line_counts[pair.first] += pair.second;
-
-	std::unordered_map<std::string, std::string> nick_to_id;
-
-	for (auto pair : nick_line_counts)
-		nick_to_id[pair.first] = pair.first;
-
-	for (auto nick_group : this->_users.get_nick_groups())
-	{
-		int max_lines = 0;
-
-		Glib::ustring best_nick = "";
-
-		for (auto nick : *nick_group)
-		{
-			if (nick_line_counts[nick] > max_lines)
-			{
-				max_lines = nick_line_counts[nick];
-				best_nick = nick;
-			}
-		}
-
-		if (!best_nick.empty())
-		{
-			for (auto nick : *nick_group)
-				nick_to_id[nick] = best_nick;
-		}
-	}
-
-	std::unordered_map<std::string, int> user_line_counts;
-
-	for (auto pair : nick_line_counts)
-		user_line_counts[nick_to_id[pair.first]] += pair.second;
-
 	std::set<std::pair<int, Glib::ustring>> sorted_user_line_counts;
 
-	for (auto pair : user_line_counts)
-		sorted_user_line_counts.insert(std::make_pair(-pair.second, pair.first));
+	for (auto user : this->_users.get_users())
+	{
+		sorted_user_line_counts.insert(std::make_pair(-(user->get_line_count()), user->get_display_name()));
+	}
 
 	unsigned int count = 0;
 	unsigned int rank = 0;
@@ -188,24 +170,6 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 	output_stream->put_string("\t\t\t</table>\n");
 
-	if (count < nick_line_counts.size())
-		output_stream->put_string(Glib::ustring::compose("\t\t\t<p>Plus %1 others who obviously weren't important enough for the table</p>\n", nick_line_counts.size() - count));
-}
-
-void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
-{
-	for (auto session : sessions)
-	{
-		if (this->_target.empty())
-			this->_target = session->target;
-
-		for (auto event : session->events)
-		{
-			if (event->type == EventType::MESSAGE)
-				this->_nick_message_counts[event->subject.nick]++;
-
-			if (event->type == EventType::ACTION)
-				this->_nick_action_counts[event->subject.nick]++;
-		}
-	}
+	if (count < sorted_user_line_counts.size())
+		output_stream->put_string(Glib::ustring::compose("\t\t\t<p>Plus %1 others who obviously weren't important enough for the table</p>\n", sorted_user_line_counts.size() - count));
 }

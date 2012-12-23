@@ -24,21 +24,45 @@
 #define CHATSTATS_USERS_HH
 
 #include <deque>
+#include <map>
 #include <memory>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 
 #include <giomm/file.h>
 #include <glibmm/ustring.h>
+
+class UserStats
+{
+	public:
+		Glib::ustring get_display_name();
+
+		int get_line_count();
+
+		void add_nick(const Glib::ustring & nick);
+
+		void increment_message_count(const Glib::ustring & nick);
+		void increment_action_count(const Glib::ustring & nick);
+
+	private:
+		std::unordered_set<std::string> _nicks;
+
+		std::unordered_map<std::string, int> _message_count;
+		std::unordered_map<std::string, int> _action_count;
+};
 
 class Users
 {
 	public:
 		Users(Glib::RefPtr<Gio::File> users_file);
 
-		std::deque<std::shared_ptr<std::set<Glib::ustring>>> get_nick_groups();
+		std::set<std::shared_ptr<UserStats>> get_users();
+
+		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick);
 
 	private:
-		std::deque<std::shared_ptr<std::set<Glib::ustring>>> _nick_groups;
+		std::map<std::string, std::shared_ptr<UserStats>> _users;
 };
 
 #endif // CHATSTATS_USERS_HH
