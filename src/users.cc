@@ -130,7 +130,7 @@ void Users::print_debug_info()
 	std::cout << "Declared Users:" << std::endl;
 
 	for (auto pair : users)
-		std::cout << "  " << std::setiosflags(std::ios_base::left) << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
 
 	users.clear();
 
@@ -140,7 +140,7 @@ void Users::print_debug_info()
 	std::cout << std::endl << "Unassigned Nicks:" << std::endl;
 
 	for (auto pair : users)
-		std::cout << "  " << std::setiosflags(std::ios_base::left) << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
 }
 
 std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
