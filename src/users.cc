@@ -137,10 +137,18 @@ void Users::print_debug_info()
 	for (auto user : this->_undeclared_users)
 		users.insert(std::make_pair(-(user->get_line_count()), user));
 
-	std::cout << std::endl << "Unassigned Nicks:" << std::endl;
+	std::cout << std::endl << "Top 100 Unassigned Nicks:" << std::endl;
+
+	int count = 0;
 
 	for (auto pair : users)
+	{
+		if (count > 100)
+			break;
+
 		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+		count++;
+	}
 }
 
 std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
