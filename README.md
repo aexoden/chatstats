@@ -96,10 +96,18 @@ currently supported, but support for them can be added on request.
 #### `--users-file`
 
 This option allows the user to specify a file to control manually linking
-nicknames for statistics purposes. The file currently supports two commands,
-`USER` and `NICK`. `USER` declares a new user. `NICK` is a space or tab
-delimited list of case-sensitive nicknames. Nicknames are associated with the
-most recently declared user.
+nicknames for statistics purposes. The file currently supports two directives:
+
+##### `USER`
+
+Declares a new user. Subsequent directives will apply to this user, until
+another `USER` directive is encountered. An optional alias for the user may be
+specified after `USER` and a single tab or space.
+
+##### `NICK`
+
+Assigns nicknames to the most recently declared user. Accepts any number of
+nicknames, separated by tabs or spaces. Multiple `NICK` directives are allowed.
 
 Bugs and Feature Requests
 -------------------------

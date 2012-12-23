@@ -27,8 +27,15 @@
 
 #include "users.hh"
 
+UserStats::UserStats(const Glib::ustring & alias) :
+	_alias(alias)
+{ }
+
 Glib::ustring UserStats::get_display_name()
 {
+	if (!this->_alias.empty())
+		return this->_alias;
+
 	int max_line_count = -1;
 	Glib::ustring best_nick = "";
 
@@ -91,7 +98,10 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 
 			if (tokens[0] == "USER")
 			{
-				user = std::make_shared<UserStats>();
+				if (line.length() > 5)
+					user = std::make_shared<UserStats>(line.substr(5));
+				else
+					user = std::make_shared<UserStats>();
 			}
 			else if (tokens[0] == "NICK")
 			{

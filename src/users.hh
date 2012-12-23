@@ -36,6 +36,8 @@
 class UserStats
 {
 	public:
+		UserStats(const Glib::ustring & alias = "");
+
 		Glib::ustring get_display_name();
 
 		int get_line_count();
@@ -46,6 +48,8 @@ class UserStats
 		void increment_action_count(const Glib::ustring & nick);
 
 	private:
+		Glib::ustring _alias;
+
 		std::unordered_set<std::string> _nicks;
 
 		std::unordered_map<std::string, int> _message_count;
