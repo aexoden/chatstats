@@ -54,10 +54,14 @@ int main(int argc, char **argv)
 	Gio::init();
 
 	Glib::ustring input_format = "chatstats";
+	Glib::ustring users_filename = "";
 
 	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
 	Glib::OptionEntry input_format_entry = create_option_entry("input-format", 'f', "Format of logs in input directory");
 	option_group.add_entry(input_format_entry, input_format);
+
+	Glib::OptionEntry users_file_entry = create_option_entry("users-file", 'u', "User configuration file");
+	option_group.add_entry(users_file_entry, users_filename);
 
 	Glib::OptionContext option_context("[COMMAND] [COMMAND-PARAMETERS]...");
 	option_context.set_main_group(option_group);
@@ -146,9 +150,14 @@ int main(int argc, char **argv)
 			exit(EXIT_FAILURE);
 		}
 
+		Glib::RefPtr<Gio::File> users_file;
+
+		if (!users_filename.empty())
+			users_file = Gio::File::create_for_commandline_arg(users_filename);
+
 		output_directory->make_directory();
 
-		GenerateOperation operation(input_directory, log_reader, output_directory);
+		GenerateOperation operation(input_directory, log_reader, output_directory, users_file);
 		operation.execute();
 	}
 	else

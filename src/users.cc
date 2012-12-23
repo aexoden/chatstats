@@ -20,39 +20,52 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_GENERATE_OPERATION_HH
-#define CHATSTATS_GENERATE_OPERATION_HH
+#include <vector>
 
-#include <giomm/dataoutputstream.h>
+#include <giomm/datainputstream.h>
+#include <glibmm/regex.h>
 
-#include "operation.hh"
 #include "users.hh"
 
-class GenerateOperation : public Operation
+Users::Users(Glib::RefPtr<Gio::File> users_file)
 {
-	public:
-		GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file);
+	if (!users_file)
+		return;
 
-	protected:
-		virtual void _cleanup();
-		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+	auto users_stream = Gio::DataInputStream::create(users_file->read());
+	std::string line;
 
-	private:
-		void _output_css_default();
+	auto nick_group = std::make_shared<std::set<Glib::ustring>>();
 
-		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
-		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+	while (users_stream->read_line(line))
+	{
+		if (!line.empty())
+		{
+			std::vector<Glib::ustring> tokens = Glib::Regex::create("[\t ]+")->split(line);
 
-		void _output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+			if (tokens[0] == "USER")
+			{
+				if (!nick_group->empty())
+					this->_nick_groups.push_back(nick_group);
 
-		Glib::RefPtr<Gio::File> _output_directory;
-		Glib::ustring _target;
+				nick_group = std::make_shared<std::set<Glib::ustring>>();
+			}
+			else if (tokens[0] == "NICK")
+			{
+				for (size_t i = 1; i < tokens.size(); i++)
+				{
+					if (!tokens[i].empty())
+						nick_group->insert(tokens[i]);
+				}
+			}
+		}
+	}
 
-		std::unordered_map<std::string, int> _nick_action_counts;
-		std::unordered_map<std::string, int> _nick_message_counts;
+	if (!nick_group->empty())
+		this->_nick_groups.push_back(nick_group);
+}
 
-		Users _users;
-};
-
-#endif // CHATSTATS_GENERATE_OPERATION_HH
-
+std::deque<std::shared_ptr<std::set<Glib::ustring>>> Users::get_nick_groups()
+{
+	return this->_nick_groups;
+}

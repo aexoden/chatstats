@@ -27,9 +27,10 @@
 #include "generate_operation.hh"
 #include "version.hh"
 
-GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory) :
+GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file) :
 	Operation(input_directory, reader),
-	_output_directory(output_directory)
+	_output_directory(output_directory),
+	_users(users_file)
 { }
 
 void GenerateOperation::_cleanup()
@@ -120,16 +121,56 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 	output_stream->put_string("\t\t\t<table>\n");
 	output_stream->put_string("\t\t\t\t<tr><th>Rank</th><th>Nickname</th><th>Lines</th></tr>\n");
 
-	std::set<std::pair<int, Glib::ustring>> nick_line_counts;
+	std::unordered_map<std::string, int> nick_line_counts;
 
 	for (auto pair : this->_nick_message_counts)
-		nick_line_counts.insert(std::make_pair(-pair.second - this->_nick_action_counts[pair.first], pair.first));
+		nick_line_counts[pair.first] += pair.second;
+
+	for (auto pair : this->_nick_action_counts)
+		nick_line_counts[pair.first] += pair.second;
+
+	std::unordered_map<std::string, std::string> nick_to_id;
+
+	for (auto pair : nick_line_counts)
+		nick_to_id[pair.first] = pair.first;
+
+	for (auto nick_group : this->_users.get_nick_groups())
+	{
+		int max_lines = 0;
+
+		Glib::ustring best_nick = "";
+
+		for (auto nick : *nick_group)
+		{
+			if (nick_line_counts[nick] > max_lines)
+			{
+				max_lines = nick_line_counts[nick];
+				best_nick = nick;
+			}
+		}
+
+		if (!best_nick.empty())
+		{
+			for (auto nick : *nick_group)
+				nick_to_id[nick] = best_nick;
+		}
+	}
+
+	std::unordered_map<std::string, int> user_line_counts;
+
+	for (auto pair : nick_line_counts)
+		user_line_counts[nick_to_id[pair.first]] += pair.second;
+
+	std::set<std::pair<int, Glib::ustring>> sorted_user_line_counts;
+
+	for (auto pair : user_line_counts)
+		sorted_user_line_counts.insert(std::make_pair(-pair.second, pair.first));
 
 	unsigned int count = 0;
 	unsigned int rank = 0;
 	unsigned int last_score = 0;
 
-	for (auto pair : nick_line_counts)
+	for (auto pair : sorted_user_line_counts)
 	{
 		unsigned int score = -pair.first;
 

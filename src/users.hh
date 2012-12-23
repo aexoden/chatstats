@@ -20,39 +20,26 @@
  * SOFTWARE.
  */
 
-#ifndef CHATSTATS_GENERATE_OPERATION_HH
-#define CHATSTATS_GENERATE_OPERATION_HH
+#ifndef CHATSTATS_USERS_HH
+#define CHATSTATS_USERS_HH
 
-#include <giomm/dataoutputstream.h>
+#include <deque>
+#include <memory>
+#include <set>
 
-#include "operation.hh"
-#include "users.hh"
+#include <giomm/file.h>
+#include <glibmm/ustring.h>
 
-class GenerateOperation : public Operation
+class Users
 {
 	public:
-		GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file);
+		Users(Glib::RefPtr<Gio::File> users_file);
 
-	protected:
-		virtual void _cleanup();
-		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
+		std::deque<std::shared_ptr<std::set<Glib::ustring>>> get_nick_groups();
 
 	private:
-		void _output_css_default();
-
-		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
-		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
-
-		void _output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream);
-
-		Glib::RefPtr<Gio::File> _output_directory;
-		Glib::ustring _target;
-
-		std::unordered_map<std::string, int> _nick_action_counts;
-		std::unordered_map<std::string, int> _nick_message_counts;
-
-		Users _users;
+		std::deque<std::shared_ptr<std::set<Glib::ustring>>> _nick_groups;
 };
 
-#endif // CHATSTATS_GENERATE_OPERATION_HH
+#endif // CHATSTATS_USERS_HH
 
