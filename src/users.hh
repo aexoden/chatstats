@@ -24,9 +24,7 @@
 #define CHATSTATS_USERS_HH
 
 #include <deque>
-#include <map>
 #include <memory>
-#include <set>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -61,12 +59,16 @@ class Users
 	public:
 		Users(Glib::RefPtr<Gio::File> users_file);
 
-		std::set<std::shared_ptr<UserStats>> get_users();
+		void print_debug_info();
 
+		std::unordered_set<std::shared_ptr<UserStats>> get_users();
 		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick);
 
 	private:
-		std::map<std::string, std::shared_ptr<UserStats>> _users;
+		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
+
+		std::unordered_set<std::shared_ptr<UserStats>> _declared_users;
+		std::unordered_set<std::shared_ptr<UserStats>> _undeclared_users;
 };
 
 #endif // CHATSTATS_USERS_HH

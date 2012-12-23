@@ -27,10 +27,11 @@
 #include "generate_operation.hh"
 #include "version.hh"
 
-GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file) :
+GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users) :
 	Operation(input_directory, reader),
 	_output_directory(output_directory),
-	_users(users_file)
+	_users(users_file),
+	_debug_users(debug_users)
 { }
 
 void GenerateOperation::_cleanup()
@@ -43,6 +44,9 @@ void GenerateOperation::_cleanup()
 	this->_output_html_header(output_stream);
 	this->_output_section_overall_ranking(output_stream);
 	this->_output_html_footer(output_stream);
+
+	if (this->_debug_users)
+		this->_users.print_debug_info();
 }
 
 void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions)
@@ -54,13 +58,24 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 
 		for (auto event : session->events)
 		{
-			auto user = this->_users.get_user(event->subject.nick);
+			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
+			{
+				auto user = this->_users.get_user(event->subject.nick);
 
-			if (event->type == EventType::MESSAGE)
-				user->increment_message_count(event->subject.nick);
+				switch (event->type)
+				{
+					case EventType::MESSAGE:
+						user->increment_message_count(event->subject.nick);
+						break;
 
-			if (event->type == EventType::ACTION)
-				user->increment_action_count(event->subject.nick);
+					case EventType::ACTION:
+						user->increment_action_count(event->subject.nick);
+						break;
+
+					default:
+						break;
+				}
+			}
 		}
 	}
 }

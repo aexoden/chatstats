@@ -69,7 +69,12 @@ directory, so you should add these files after the HTML is generated.
 
 ### Options
 
-There are currently two options available:
+These are the available options:
+
+#### `--debug-users`
+
+This option prints out a debug report to help identify important nicknames that
+have not been explicitly assigned to a user in the users file.
 
 #### `--input-format`
 

@@ -56,7 +56,12 @@ int main(int argc, char **argv)
 	Glib::ustring input_format = "chatstats";
 	Glib::ustring users_filename = "";
 
+	bool debug_users = false;
+
 	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
+	Glib::OptionEntry debug_users_entry = create_option_entry("debug-users", 'd', "Debug user nickname linking");
+	option_group.add_entry(debug_users_entry, debug_users);
+
 	Glib::OptionEntry input_format_entry = create_option_entry("input-format", 'f', "Format of logs in input directory");
 	option_group.add_entry(input_format_entry, input_format);
 
@@ -157,7 +162,7 @@ int main(int argc, char **argv)
 
 		output_directory->make_directory();
 
-		GenerateOperation operation(input_directory, log_reader, output_directory, users_file);
+		GenerateOperation operation(input_directory, log_reader, output_directory, users_file, debug_users);
 		operation.execute();
 	}
 	else

@@ -20,6 +20,9 @@
  * SOFTWARE.
  */
 
+#include <iomanip>
+#include <iostream>
+#include <set>
 #include <vector>
 
 #include <giomm/datainputstream.h>
@@ -102,6 +105,8 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 					user = std::make_shared<UserStats>(line.substr(5));
 				else
 					user = std::make_shared<UserStats>();
+
+				this->_declared_users.insert(user);
 			}
 			else if (tokens[0] == "NICK")
 			{
@@ -115,9 +120,32 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 	}
 }
 
-std::set<std::shared_ptr<UserStats>> Users::get_users()
+void Users::print_debug_info()
 {
-	std::set<std::shared_ptr<UserStats>> users;
+	std::set<std::pair<int, std::shared_ptr<UserStats>>> users;
+
+	for (auto user : this->_declared_users)
+		users.insert(std::make_pair(-(user->get_line_count()), user));
+
+	std::cout << "Declared Users:" << std::endl;
+
+	for (auto pair : users)
+		std::cout << "  " << std::setiosflags(std::ios_base::left) << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+
+	users.clear();
+
+	for (auto user : this->_undeclared_users)
+		users.insert(std::make_pair(-(user->get_line_count()), user));
+
+	std::cout << std::endl << "Unassigned Nicks:" << std::endl;
+
+	for (auto pair : users)
+		std::cout << "  " << std::setiosflags(std::ios_base::left) << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+}
+
+std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
+{
+	std::unordered_set<std::shared_ptr<UserStats>> users;
 
 	for (auto pair : this->_users)
 		users.insert(pair.second);
@@ -128,7 +156,10 @@ std::set<std::shared_ptr<UserStats>> Users::get_users()
 std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick)
 {
 	if (this->_users.count(nick) == 0)
+	{
 		this->_users[nick] = std::make_shared<UserStats>();
+		this->_undeclared_users.insert(this->_users[nick]);
+	}
 
 	return this->_users[nick];
 }

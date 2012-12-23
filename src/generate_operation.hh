@@ -31,7 +31,7 @@
 class GenerateOperation : public Operation
 {
 	public:
-		GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file);
+		GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users);
 
 	protected:
 		virtual void _cleanup();
@@ -48,10 +48,12 @@ class GenerateOperation : public Operation
 		Glib::RefPtr<Gio::File> _output_directory;
 		Glib::ustring _target;
 
+		Users _users;
+
+		bool _debug_users;
+
 		std::unordered_map<std::string, int> _nick_action_counts;
 		std::unordered_map<std::string, int> _nick_message_counts;
-
-		Users _users;
 };
 
 #endif // CHATSTATS_GENERATE_OPERATION_HH

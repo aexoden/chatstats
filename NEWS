@@ -2,6 +2,7 @@
 =========
 * Add the ability to manually link nicknames.
 * Support giving users a non-nickname alias.
+* Add a report to help identify important unassigned nicknames.
 
 0.0.1 (2012-12-21)
 ==================
