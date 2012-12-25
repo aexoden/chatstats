@@ -127,6 +127,10 @@ capture events occurring from 2002-10-03 up to 2004-11-01 (but not including
 2004-11-01), occurring from midnight to noon. The date and time sections are
 completely independent and tested separately.
 
+All fields are optional, but the delimiters are required if using the extended
+syntax. The dates must be in YYYY-MM-DD format, and the times must be in
+HH:MM:SS format.
+
 Bugs and Feature Requests
 -------------------------
 
