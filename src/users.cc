@@ -93,6 +93,8 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 
 	auto user = std::make_shared<UserStats>();
 
+	auto time_range_regex = Glib::Regex::create("(?P<nick>[^!]*)!(?P<start_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?/(?P<end_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?@(?P<start_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?/(?P<end_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?");
+
 	while (users_stream->read_line(line))
 	{
 		if (!line.empty())
@@ -113,7 +115,18 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 				for (size_t i = 1; i < tokens.size(); i++)
 				{
 					if (!tokens[i].empty())
+					{
+						Glib::MatchInfo match_info;
+
+						if (time_range_regex->match(tokens[i], match_info))
+						{
+							auto time_range = std::make_shared<TimeRange>(match_info.fetch_named("start_date"), match_info.fetch_named("end_date"), match_info.fetch_named("start_time"), match_info.fetch_named("end_time"));
+
+							this->_time_range_nicks.insert(std::make_pair(match_info.fetch_named("nick"), std::make_pair(time_range, tokens[i])));
+						}
+
 						this->_users[tokens[i]] = user;
+					}
 				}
 			}
 		}
@@ -161,13 +174,26 @@ std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
 	return users;
 }
 
-std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick)
+std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, std::shared_ptr<const Glib::DateTime> timestamp)
 {
-	if (this->_users.count(nick) == 0)
+	Glib::ustring search_nick = nick;
+
+	auto range = this->_time_range_nicks.equal_range(nick);
+
+	for (auto pair = range.first; pair != range.second; pair++)
 	{
-		this->_users[nick] = std::make_shared<UserStats>();
-		this->_undeclared_users.insert(this->_users[nick]);
+		if (pair->second.first->check(timestamp))
+		{
+			search_nick = pair->second.second;
+			break;
+		}
 	}
 
-	return this->_users[nick];
+	if (this->_users.count(search_nick) == 0)
+	{
+		this->_users[search_nick] = std::make_shared<UserStats>();
+		this->_undeclared_users.insert(this->_users[search_nick]);
+	}
+
+	return this->_users[search_nick];
 }

@@ -114,6 +114,19 @@ specified after `USER` and a single tab or space.
 Assigns nicknames to the most recently declared user. Accepts any number of
 nicknames, separated by tabs or spaces. Multiple `NICK` directives are allowed.
 
+An extended nickname syntax is available to restrict nickname linkages to
+specific date or time ranges. This is useful if two different users used the
+same nickname at different points in time. (This is most useful on logs spanning
+many years, where nicknames may be potentially reused after some time.) The
+syntax is as follows:
+
+`<nickname>!<start_date>/<end_date>@<start_time>/<end_time>`
+
+A complete example is `Joe!2002-10-03/2004-11-01@00:00:00/12:00:00`. This would
+capture events occurring from 2002-10-03 up to 2004-11-01 (but not including
+2004-11-01), occurring from midnight to noon. The date and time sections are
+completely independent and tested separately.
+
 Bugs and Feature Requests
 -------------------------
 

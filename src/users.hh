@@ -31,6 +31,8 @@
 #include <giomm/file.h>
 #include <glibmm/ustring.h>
 
+#include "time_range.hh"
+
 class UserStats
 {
 	public:
@@ -62,10 +64,12 @@ class Users
 		void print_debug_info();
 
 		std::unordered_set<std::shared_ptr<UserStats>> get_users();
-		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick);
+		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick, std::shared_ptr<const Glib::DateTime> timestamp);
 
 	private:
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
+
+		std::unordered_multimap<std::string, std::pair<std::shared_ptr<TimeRange>, std::string>> _time_range_nicks;
 
 		std::unordered_set<std::shared_ptr<UserStats>> _declared_users;
 		std::unordered_set<std::shared_ptr<UserStats>> _undeclared_users;

@@ -60,7 +60,7 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 		{
 			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
 			{
-				auto user = this->_users.get_user(event->subject.nick);
+				auto user = this->_users.get_user(event->subject.nick, event->timestamp);
 
 				switch (event->type)
 				{
