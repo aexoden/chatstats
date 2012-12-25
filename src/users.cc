@@ -136,11 +136,20 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 void Users::print_debug_info()
 {
 	std::set<std::pair<int, std::shared_ptr<UserStats>>> users;
+	int total_lines = 0;
+	int total_declared_lines = 0;
 
 	for (auto user : this->_declared_users)
-		users.insert(std::make_pair(-(user->get_line_count()), user));
+	{
+		int line_count = user->get_line_count();
 
-	std::cout << "Declared Users:" << std::endl;
+		total_declared_lines += line_count;
+		total_lines += line_count;
+
+		users.insert(std::make_pair(-line_count, user));
+	}
+
+	std::cout << this->_declared_users.size() << " Declared Users:" << std::endl;
 
 	for (auto pair : users)
 		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
@@ -148,7 +157,12 @@ void Users::print_debug_info()
 	users.clear();
 
 	for (auto user : this->_undeclared_users)
-		users.insert(std::make_pair(-(user->get_line_count()), user));
+	{
+		int line_count = user->get_line_count();
+
+		total_lines += line_count;
+		users.insert(std::make_pair(-line_count, user));
+	}
 
 	std::cout << std::endl << "Top 100 Unassigned Nicks:" << std::endl;
 
@@ -156,12 +170,14 @@ void Users::print_debug_info()
 
 	for (auto pair : users)
 	{
-		if (count > 100)
-			break;
-
-		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
-		count++;
+		if (count < 100)
+		{
+			std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+			count++;
+		}
 	}
+
+	std::cout << std::endl << "Out of " << total_lines << " total lines, " << total_declared_lines << " (" << (total_declared_lines * 100.0 / total_lines) << "%) were assigned to declared users." << std::endl;
 }
 
 std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
