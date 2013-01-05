@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <iostream>
 
+#include <glibmm/datetime.h>
 #include <glibmm/miscutils.h>
 
 #include "log_writer.hh"
@@ -36,6 +37,8 @@ Operation::Operation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<Lo
 
 void Operation::execute()
 {
+	this->_start_time = std::make_shared<const Glib::DateTime>(Glib::DateTime::create_now_utc());
+
 	for (const std::string & filename : this->_get_input_filenames())
 	{
 		auto sessions = this->_reader->read(Gio::File::create_for_path(filename));

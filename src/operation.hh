@@ -48,6 +48,8 @@ class Operation
 
 		std::set<std::string> _get_input_filenames();
 
+		std::shared_ptr<const Glib::DateTime> _start_time;
+
 		virtual void _cleanup() = 0;
 		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions) = 0;
 };
