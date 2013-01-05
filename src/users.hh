@@ -61,7 +61,7 @@ class UserStats
 class Users
 {
 	public:
-		Users(Glib::RefPtr<Gio::File> users_file);
+		Users(Glib::RefPtr<Gio::File> users_file, bool separate_userhosts);
 
 		void print_debug_info();
 
@@ -69,6 +69,8 @@ class Users
 		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick, const Glib::ustring & userhost, std::shared_ptr<const Glib::DateTime> timestamp);
 
 	private:
+		bool _separate_userhosts;
+
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
 
 		std::unordered_map<std::string, std::pair<Glib::RefPtr<Glib::Regex>, std::shared_ptr<TimeRange>>> _declared_nicks;

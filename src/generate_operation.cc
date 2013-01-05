@@ -27,10 +27,10 @@
 #include "generate_operation.hh"
 #include "version.hh"
 
-GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users) :
+GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users, bool separate_userhosts) :
 	Operation(input_directory, reader),
 	_output_directory(output_directory),
-	_users(users_file),
+	_users(users_file, separate_userhosts),
 	_debug_users(debug_users)
 { }
 
@@ -92,6 +92,8 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 				this->_userhost_cache[event->object.nick] = this->_userhost_cache[event->subject.nick];
 			}
 		}
+
+		this->_last_session_stop = session->stop;
 	}
 }
 

@@ -99,7 +99,8 @@ void _str_replace(Glib::ustring & string, const Glib::ustring & search, const Gl
 	}
 }
 
-Users::Users(Glib::RefPtr<Gio::File> users_file)
+Users::Users(Glib::RefPtr<Gio::File> users_file, bool separate_userhosts) :
+	_separate_userhosts(separate_userhosts)
 {
 	if (!users_file)
 		return;
@@ -176,13 +177,18 @@ void Users::print_debug_info()
 	std::cout << this->_declared_users.size() << " Declared Users:" << std::endl;
 
 	for (auto pair : users)
-		std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+		std::cout << "  " << Glib::ustring::format(std::left, std::setw(30), pair.second->get_display_name()).raw() << " " << -pair.first << std::endl;
 
 	users.clear();
+
+	Glib::ustring::size_type max_length = 0;
 
 	for (auto user : this->_undeclared_users)
 	{
 		int line_count = user->get_line_count();
+
+		if (user->get_display_name().size() > max_length)
+			max_length = user->get_display_name().size();
 
 		total_lines += line_count;
 		users.insert(std::make_pair(-line_count, user));
@@ -196,7 +202,7 @@ void Users::print_debug_info()
 	{
 		if (count < 100)
 		{
-			std::cout << "  " << std::left << std::setw(30) << pair.second->get_display_name().raw() << " " << -pair.first << std::endl;
+			std::cout << "  " << Glib::ustring::format(std::left, std::setw(max_length), pair.second->get_display_name()).raw() << " " << -pair.first << std::endl;
 			count++;
 		}
 	}
@@ -216,7 +222,7 @@ std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
 
 std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Glib::ustring & userhost, std::shared_ptr<const Glib::DateTime> timestamp)
 {
-	Glib::ustring search_nick = nick;
+	Glib::ustring search_nick = this->_separate_userhosts ? Glib::ustring::compose("%1!%2", nick, userhost) : nick;
 
 	for (auto pair : this->_declared_nicks)
 	{

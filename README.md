@@ -76,6 +76,16 @@ These are the available options:
 This option prints out a debug report to help identify important nicknames that
 have not been explicitly assigned to a user in the users file.
 
+#### `--separate-userhosts`
+
+Tells chatstats to separate users by the full nick!user@host specification,
+rather than merely by nick. In cases where the hostname is indeterminable, the
+resultant user will have a description of <nick>!@.
+
+This option is best used in conjunction with a nick configuration file
+specifying users and their nicks or userhosts. Explicitly declared users will
+display by their alias (if defined) or by their most used nick.
+
 #### `--input-format`
 
 This option controls the format the input logs are in. chatstats currently
