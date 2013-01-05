@@ -66,6 +66,11 @@ int UserStats::get_line_count()
 	return line_count;
 }
 
+int UserStats::get_nick_count()
+{
+	return this->_nicks.size();
+}
+
 void UserStats::add_nick(const Glib::ustring & nick)
 {
 	this->_nicks.insert(nick);

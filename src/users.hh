@@ -41,6 +41,7 @@ class UserStats
 		Glib::ustring get_display_name();
 
 		int get_line_count();
+		int get_nick_count();
 
 		void add_nick(const Glib::ustring & nick);
 

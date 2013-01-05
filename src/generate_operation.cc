@@ -154,13 +154,13 @@ void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> 
 void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream)
 {
 	output_stream->put_string("\t\t\t<table>\n");
-	output_stream->put_string("\t\t\t\t<tr><th>Rank</th><th>Nickname</th><th>Lines</th></tr>\n");
+	output_stream->put_string("\t\t\t\t<tr><th>Rank</th><th>User</th><th>Lines</th><th>Nicknames</th></tr>\n");
 
-	std::set<std::pair<int, Glib::ustring>> sorted_user_line_counts;
+	std::set<std::pair<int, std::shared_ptr<UserStats>>> sorted_user_line_counts;
 
 	for (auto user : this->_users.get_users())
 	{
-		sorted_user_line_counts.insert(std::make_pair(-(user->get_line_count()), user->get_display_name()));
+		sorted_user_line_counts.insert(std::make_pair(-(user->get_line_count()), user));
 	}
 
 	unsigned int count = 0;
@@ -179,7 +179,7 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 		last_score = score;
 
-		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td>%2</td><td>%3</td></tr>\n", rank, _encode_html_chars(pair.second), score));
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td></tr>\n", rank, _encode_html_chars(pair.second->get_display_name()), score, pair.second->get_nick_count()));
 		count++;
 	}
 

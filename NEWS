@@ -4,6 +4,7 @@
 * Support giving users a non-nickname alias.
 * Add a report to help identify important unassigned nicknames.
 * Add the ability to selectively link nicknames based on timestamp.
+* Include nick count in the generated HTML statistics.
 
 0.0.1 (2012-12-21)
 ==================
