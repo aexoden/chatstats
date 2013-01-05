@@ -56,7 +56,8 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 		if (this->_target.empty())
 			this->_target = session->target;
 
-		this->_userhost_cache.clear();
+		if (!this->_last_session_stop || (session->start->to_unix() - this->_last_session_stop->to_unix()) >= 300)
+			this->_userhost_cache.clear();
 
 		for (auto event : session->events)
 		{
