@@ -65,7 +65,7 @@ class Users
 		void print_debug_info();
 
 		std::unordered_set<std::shared_ptr<UserStats>> get_users();
-		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick, std::shared_ptr<const Glib::DateTime> timestamp);
+		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick, const Glib::ustring & userhost, std::shared_ptr<const Glib::DateTime> timestamp);
 
 	private:
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;

@@ -56,11 +56,18 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 		if (this->_target.empty())
 			this->_target = session->target;
 
+		this->_userhost_cache.clear();
+
 		for (auto event : session->events)
 		{
 			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
 			{
-				auto user = this->_users.get_user(event->subject.nick, event->timestamp);
+				if (this->_userhost_cache.count(event->subject.nick) == 0)
+					this->_userhost_cache[event->subject.nick] = "!@";
+
+				std::string userhost = this->_userhost_cache[event->subject.nick];
+
+				auto user = this->_users.get_user(event->subject.nick, userhost, event->timestamp);
 
 				switch (event->type)
 				{
@@ -75,6 +82,14 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 					default:
 						break;
 				}
+			}
+			else if (event->type == EventType::JOIN)
+			{
+				this->_userhost_cache[event->subject.nick] = Glib::ustring::compose("%1@%2", event->subject.user, event->subject.host);
+			}
+			else if (event->type == EventType::NICK_CHANGE)
+			{
+				this->_userhost_cache[event->object.nick] = this->_userhost_cache[event->subject.nick];
 			}
 		}
 	}

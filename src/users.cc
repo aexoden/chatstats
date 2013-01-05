@@ -195,7 +195,7 @@ std::unordered_set<std::shared_ptr<UserStats>> Users::get_users()
 	return users;
 }
 
-std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, std::shared_ptr<const Glib::DateTime> timestamp)
+std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Glib::ustring & userhost, std::shared_ptr<const Glib::DateTime> timestamp)
 {
 	Glib::ustring search_nick = nick;
 

@@ -52,8 +52,7 @@ class GenerateOperation : public Operation
 
 		bool _debug_users;
 
-		std::unordered_map<std::string, int> _nick_action_counts;
-		std::unordered_map<std::string, int> _nick_message_counts;
+		std::unordered_map<std::string, std::string> _userhost_cache;
 };
 
 #endif // CHATSTATS_GENERATE_OPERATION_HH
