@@ -60,11 +60,11 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 
 		for (auto event : session->events)
 		{
+			if (this->_userhost_cache.count(event->subject.nick) == 0)
+				this->_userhost_cache[event->subject.nick] = "@";
+
 			if (event->type == EventType::MESSAGE || event->type == EventType::ACTION)
 			{
-				if (this->_userhost_cache.count(event->subject.nick) == 0)
-					this->_userhost_cache[event->subject.nick] = "!@";
-
 				std::string userhost = this->_userhost_cache[event->subject.nick];
 
 				auto user = this->_users.get_user(event->subject.nick, userhost, event->timestamp);

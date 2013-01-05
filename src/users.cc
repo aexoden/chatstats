@@ -88,6 +88,17 @@ void UserStats::increment_action_count(const Glib::ustring & nick)
 	this->_action_count[nick]++;
 }
 
+void _str_replace(Glib::ustring & string, const Glib::ustring & search, const Glib::ustring & replace)
+{
+	size_t pos = 0;
+
+	while ((pos = string.find(search, pos)) != std::string::npos)
+	{
+		string.replace(pos, search.length(), replace);
+		pos += replace.length();
+	}
+}
+
 Users::Users(Glib::RefPtr<Gio::File> users_file)
 {
 	if (!users_file)
@@ -98,7 +109,7 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 
 	auto user = std::make_shared<UserStats>();
 
-	auto time_range_regex = Glib::Regex::create("(?P<nick>[^!]*)!(?P<start_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?/(?P<end_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?@(?P<start_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?/(?P<end_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?");
+	auto nick_regex = Glib::Regex::create("(?P<nick>[^!#]*)(!(?P<userhost>[^@]*@[^#]*))?(#(?P<start_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?/(?P<end_date>[0-9]{4}-[0-9]{2}-[0-9]{2})?\\+(?P<start_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?/(?P<end_time>[0-9]{2}:[0-9]{2}:[0-9]{2})?)?");
 
 	while (users_stream->read_line(line))
 	{
@@ -123,11 +134,19 @@ Users::Users(Glib::RefPtr<Gio::File> users_file)
 					{
 						Glib::MatchInfo match_info;
 
-						if (time_range_regex->match(tokens[i], match_info))
+						if (nick_regex->match(tokens[i], match_info))
 						{
-							auto time_range = std::make_shared<TimeRange>(match_info.fetch_named("start_date"), match_info.fetch_named("end_date"), match_info.fetch_named("start_time"), match_info.fetch_named("end_time"));
+							auto userhost = match_info.fetch_named("userhost");
 
-							this->_time_range_nicks.insert(std::make_pair(match_info.fetch_named("nick"), std::make_pair(time_range, tokens[i])));
+							if (userhost.empty())
+								userhost = "*@*";
+
+							auto regex = Glib::Regex::escape_string(Glib::ustring::compose("%1!%2", match_info.fetch_named("nick"), userhost));
+							_str_replace(regex, "\\*", ".*");
+
+							auto time_range = std::make_shared<TimeRange>(match_info.fetch_named("start_date"), match_info.fetch_named("end_date"), match_info.fetch_named("start_time"), match_info.fetch_named("end_time"));
+							std::cout << regex << std::endl;
+							this->_declared_nicks[tokens[i]] = std::make_pair(Glib::Regex::create(regex), time_range);
 						}
 
 						this->_users[tokens[i]] = user;
@@ -199,20 +218,17 @@ std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Gli
 {
 	Glib::ustring search_nick = nick;
 
-	auto range = this->_time_range_nicks.equal_range(nick);
-
-	for (auto pair = range.first; pair != range.second; pair++)
+	for (auto pair : this->_declared_nicks)
 	{
-		if (pair->second.first->check(timestamp))
+		if (pair.second.first->match(Glib::ustring::compose("%1!%2", nick, userhost)) && pair.second.second->check(timestamp))
 		{
-			search_nick = pair->second.second;
-			break;
+			search_nick = pair.first;
 		}
 	}
 
 	if (this->_users.count(search_nick) == 0)
 	{
-		this->_users[search_nick] = std::make_shared<UserStats>();
+		this->_users[search_nick] = std::make_shared<UserStats>(search_nick);
 		this->_undeclared_users.insert(this->_users[search_nick]);
 	}
 

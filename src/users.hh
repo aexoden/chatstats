@@ -29,6 +29,7 @@
 #include <unordered_set>
 
 #include <giomm/file.h>
+#include <glibmm/regex.h>
 #include <glibmm/ustring.h>
 
 #include "time_range.hh"
@@ -70,7 +71,7 @@ class Users
 	private:
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
 
-		std::unordered_multimap<std::string, std::pair<std::shared_ptr<TimeRange>, std::string>> _time_range_nicks;
+		std::unordered_map<std::string, std::pair<Glib::RefPtr<Glib::Regex>, std::shared_ptr<TimeRange>>> _declared_nicks;
 
 		std::unordered_set<std::shared_ptr<UserStats>> _declared_users;
 		std::unordered_set<std::shared_ptr<UserStats>> _undeclared_users;

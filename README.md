@@ -115,21 +115,29 @@ Assigns nicknames to the most recently declared user. Accepts any number of
 nicknames, separated by tabs or spaces. Multiple `NICK` directives are allowed.
 
 An extended nickname syntax is available to restrict nickname linkages to
-specific date or time ranges. This is useful if two different users used the
-same nickname at different points in time. (This is most useful on logs spanning
-many years, where nicknames may be potentially reused after some time.) The
-syntax is as follows:
+specific date or time ranges or specific user/host combinations. This is useful
+if two different users used the same nickname at different points in time. (This
+is most useful on logs spanning many years, where nicknames may be potentially
+reused after some time.) It's also useful for linking a large number of
+nicknames used by a single unique user/host combination. The syntax is as
+follows:
 
-`<nickname>!<start_date>/<end_date>@<start_time>/<end_time>`
+`<nickname>!<user>@<host>#<start_date>/<end_date>+<start_time>/<end_time>`
 
-A complete example is `Joe!2002-10-03/2004-11-01@00:00:00/12:00:00`. This would
-capture events occurring from 2002-10-03 up to 2004-11-01 (but not including
-2004-11-01), occurring from midnight to noon. The date and time sections are
-completely independent and tested separately.
+A complete example is `Joe!*@*.com#2002-10-03/2004-11-01@00:00:00/12:00:00`.
+This would capture events from a user named Joe connecting from a .com hostname,
+occurring from 2002-10-03 up to 2004-11-01 (but not including 2004-11-01),
+occurring from midnight to noon. The date and time sections are completely
+independent and tested separately.
+
+Linking based on user/host combinations is limited based on the completeness of
+the logs used. Since hosts are generally not available on each line in logs,
+this information must be inferred from join and nick change events.
 
 All fields are optional, but the delimiters are required if using the extended
 syntax. The dates must be in YYYY-MM-DD format, and the times must be in
-HH:MM:SS format.
+HH:MM:SS format. You may use either the hostname extended section, the time
+range extended section, or both.
 
 Bugs and Feature Requests
 -------------------------
