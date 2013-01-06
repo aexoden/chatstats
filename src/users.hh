@@ -73,11 +73,13 @@ class Users
 
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
 
-		std::unordered_map<std::string, std::pair<Glib::RefPtr<Glib::Regex>, std::shared_ptr<TimeRange>>> _declared_nicks;
+		std::unordered_map<std::string, std::pair<Glib::RefPtr<Glib::Regex>, std::shared_ptr<TimeRange>>> _time_restricted_nicks;
+		std::unordered_map<std::string, Glib::RefPtr<Glib::Regex>> _unrestricted_nicks;
+
+		std::unordered_map<std::string, std::pair<std::shared_ptr<TimeRange>, std::string>> _user_cache;
 
 		std::unordered_set<std::shared_ptr<UserStats>> _declared_users;
 		std::unordered_set<std::shared_ptr<UserStats>> _undeclared_users;
 };
 
 #endif // CHATSTATS_USERS_HH
-
