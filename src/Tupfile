@@ -1,5 +1,4 @@
 include_rules
 
-: |> bash generate-version.bash > %o |> version.hh
-: foreach *.cc | version.hh |> !cxx |>
+: foreach *.cc |> !cxx |>
 : *.o |> g++ $(LDFLAGS) %f -o %o |> chatstats

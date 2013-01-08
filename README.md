@@ -176,7 +176,7 @@ chatstats has the following dependencies:
 * [tup](http://gittup.org/tup/)
 
 To build chatstats, ensure dependencies are installed, change to the directory
-containing the chatstats sources, and execute `tup upd`. chatstats should be
+containing the chatstats sources, and execute `./build`. chatstats should be
 successfully built. There is currently no installation procedure, but the binary
 is self-contained, so you should be able to copy it to any standard binary
 location.
