@@ -149,6 +149,9 @@ syntax. The dates must be in YYYY-MM-DD format, and the times must be in
 HH:MM:SS format. You may use either the hostname extended section, the time
 range extended section, or both.
 
+Two different wildcard operators are supported: `*` and `?`. `*` matches zero
+or more characters, and `?` matches a single optional character.
+
 Bugs and Feature Requests
 -------------------------
 

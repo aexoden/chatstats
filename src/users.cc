@@ -144,6 +144,7 @@ Users::Users(Glib::RefPtr<Gio::File> users_file, bool separate_userhosts) :
 
 							auto regex = Glib::ustring::compose("^%1$", Glib::Regex::escape_string(Glib::ustring::compose("%1!%2", match_info.fetch_named("nick"), userhost)));
 							_str_replace(regex, "\\*", ".*");
+							_str_replace(regex, "\\?", ".?");
 
 							if (match_info.fetch_named("start_date").empty() && match_info.fetch_named("end_date").empty() && match_info.fetch_named("start_time").empty() && match_info.fetch_named("end_time").empty())
 							{

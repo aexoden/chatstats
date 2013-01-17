@@ -1,5 +1,9 @@
-0.0.2 (2013-01-08)
+0.0.3 (?)
 =========
+* Support the ? wildcard operator in the users file.
+
+0.0.2 (2013-01-08)
+==================
 * Add the ability to manually link nicknames.
 * Add the ability to selectively link nicknames based on timestamp or userhost.
 * Allow wildcards in nick configuration files.
