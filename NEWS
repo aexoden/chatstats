@@ -1,6 +1,7 @@
-0.0.3 (?)
+0.0.3 (2013-02-08)
 =========
 * Support the ? wildcard operator in the users file.
+* Output a user-specific stats page, which lists the user's nicks.
 
 0.0.2 (2013-01-08)
 ==================
