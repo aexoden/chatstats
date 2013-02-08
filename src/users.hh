@@ -44,6 +44,8 @@ class UserStats
 		int get_line_count();
 		int get_nick_count();
 
+		std::set<std::pair<int, Glib::ustring>> get_nicks();
+
 		void add_nick(const Glib::ustring & nick);
 
 		void increment_message_count(const Glib::ustring & nick);

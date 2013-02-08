@@ -31,9 +31,12 @@
 GenerateOperation::GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users, bool separate_userhosts) :
 	Operation(input_directory, reader),
 	_output_directory(output_directory),
+	_users_directory(Gio::File::create_for_path(Glib::build_filename(output_directory->get_path(), "users"))),
 	_users(users_file, separate_userhosts),
 	_debug_users(debug_users)
-{ }
+{
+	this->_users_directory->make_directory();
+}
 
 void GenerateOperation::_cleanup()
 {
@@ -42,7 +45,7 @@ void GenerateOperation::_cleanup()
 	Glib::RefPtr<Gio::File> output_file = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), "index.html"));
 	Glib::RefPtr<Gio::DataOutputStream> output_stream = Gio::DataOutputStream::create(output_file->create_file());
 
-	this->_output_html_header(output_stream);
+	this->_output_html_header(output_stream, "Overview");
 	this->_output_section_overall_ranking(output_stream);
 	this->_output_html_footer(output_stream);
 
@@ -140,20 +143,42 @@ body {
 )EOF");
 }
 
-void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream)
+void GenerateOperation::_output_user_page(Glib::RefPtr<Gio::File> user_file, std::shared_ptr<UserStats> user)
+{
+	Glib::RefPtr<Gio::DataOutputStream> output_stream = Gio::DataOutputStream::create(user_file->create_file());
+
+	this->_output_html_header(output_stream, Glib::ustring::compose("Users &raquo; %1", _encode_html_chars(user->get_display_name())), "../");
+
+	output_stream->put_string("\t\t\t<table>\n");
+	output_stream->put_string("\t\t\t\t<thead>\n");
+	output_stream->put_string("\t\t\t\t\t<tr><th>Nickname</th><th>Lines</th></tr>\n");
+	output_stream->put_string("\t\t\t\t<tbody>\n");
+
+	for (auto pair : user->get_nicks())
+	{
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t\t<tr><td>%1</td><td>%2</td></tr>\n", pair.second, -pair.first));
+	}
+
+	output_stream->put_string("\t\t\t\t</tbody>\n");
+	output_stream->put_string("\t\t\t</table>\n");
+
+	this->_output_html_footer(output_stream);
+}
+
+void GenerateOperation::_output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream, const Glib::ustring & title, const Glib::ustring & media_prefix)
 {
 	output_stream->put_string("<!DOCTYPE html>\n");
 	output_stream->put_string("<html>\n");
 	output_stream->put_string("\t<head>\n");
 	output_stream->put_string("\t\t<meta charset=\"utf-8\">\n");
-	output_stream->put_string(Glib::ustring::compose("\t\t<title>%1 Statistics</title>\n", this->_target));
-	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/blueprint/screen.css\" media=\"screen, projection\">\n");
-	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/blueprint/print.css\" media=\"print\">\n");
-	output_stream->put_string("\t\t<link rel=\"stylesheet\" href=\"css/default.css\">\n");
+	output_stream->put_string(Glib::ustring::compose("\t\t<title>%1 Statistics &raquo; %2</title>\n", this->_target, title));
+	output_stream->put_string(Glib::ustring::compose("\t\t<link rel=\"stylesheet\" href=\"%1css/blueprint/screen.css\" media=\"screen, projection\">\n", media_prefix));
+	output_stream->put_string(Glib::ustring::compose("\t\t<link rel=\"stylesheet\" href=\"%1css/blueprint/print.css\" media=\"print\">\n", media_prefix));
+	output_stream->put_string(Glib::ustring::compose("\t\t<link rel=\"stylesheet\" href=\"%1css/default.css\">\n", media_prefix));
 	output_stream->put_string("\t</head>\n");
 	output_stream->put_string("\t<body>\n");
 	output_stream->put_string("\t\t<div id=\"header\">\n");
-	output_stream->put_string(Glib::ustring::compose("\t\t\t<h1>%1 Statistics</h1>\n", this->_target));
+	output_stream->put_string(Glib::ustring::compose("\t\t\t<h1>%1 Statistics &raquo; %2</h1>\n", this->_target, title));
 	output_stream->put_string("\t\t</div>\n");
 	output_stream->put_string("\t\t<div id=\"content\">\n");
 }
@@ -175,7 +200,10 @@ void GenerateOperation::_output_html_footer(Glib::RefPtr<Gio::DataOutputStream> 
 void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream)
 {
 	output_stream->put_string("\t\t\t<table>\n");
-	output_stream->put_string("\t\t\t\t<tr><th>Rank</th><th>User</th><th>Lines</th><th>Nicknames</th></tr>\n");
+	output_stream->put_string("\t\t\t\t<thead>\n");
+	output_stream->put_string("\t\t\t\t\t<tr><th>Rank</th><th>User</th><th>Lines</th><th>Nicknames</th></tr>\n");
+	output_stream->put_string("\t\t\t\t</thead>\n");
+	output_stream->put_string("\t\t\t\t<tbody>\n");
 
 	std::set<std::pair<int, std::shared_ptr<UserStats>>> sorted_user_line_counts;
 
@@ -200,10 +228,14 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 		last_score = score;
 
-		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td>%2</td><td>%3</td><td>%4</td></tr>\n", rank, _encode_html_chars(pair.second->get_display_name()), score, pair.second->get_nick_count()));
+		Glib::ustring user_filename = Glib::ustring::compose("%1.html", count);
+		this->_output_user_page(Gio::File::create_for_path(Glib::build_filename(this->_users_directory->get_path(), user_filename)), pair.second);
+
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td><a href=\"%2\">%3</a></td><td>%4</td><td>%5</td></tr>\n", rank, Glib::ustring::compose("users/%1", user_filename), _encode_html_chars(pair.second->get_display_name()), score, pair.second->get_nick_count()));
 		count++;
 	}
 
+	output_stream->put_string("\t\t\t\t</tbody>\n");
 	output_stream->put_string("\t\t\t</table>\n");
 
 	if (count < sorted_user_line_counts.size())

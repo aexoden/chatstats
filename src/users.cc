@@ -71,6 +71,18 @@ int UserStats::get_nick_count()
 	return this->_nicks.size();
 }
 
+std::set<std::pair<int, Glib::ustring>> UserStats::get_nicks()
+{
+	std::set<std::pair<int, Glib::ustring>> nicks;
+
+	for (auto nick : this->_nicks)
+	{
+		nicks.insert(std::make_pair(-(this->_message_count[nick] + this->_action_count[nick]), nick));
+	}
+
+	return nicks;
+}
+
 void UserStats::add_nick(const Glib::ustring & nick)
 {
 	this->_nicks.insert(nick);

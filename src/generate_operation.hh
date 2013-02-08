@@ -40,12 +40,15 @@ class GenerateOperation : public Operation
 	private:
 		void _output_css_default();
 
-		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+		void _output_user_page(Glib::RefPtr<Gio::File> user_file, std::shared_ptr<UserStats> user);
+
+		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream, const Glib::ustring & title, const Glib::ustring & media_prefix = "");
 		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 
 		void _output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream);
 
 		Glib::RefPtr<Gio::File> _output_directory;
+		Glib::RefPtr<Gio::File> _users_directory;
 		Glib::ustring _target;
 
 		Users _users;
