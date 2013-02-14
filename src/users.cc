@@ -30,6 +30,12 @@
 
 #include "users.hh"
 
+UserMatch::UserMatch(const Glib::ustring & string, Glib::RefPtr<Glib::Regex> regex, std::shared_ptr<TimeRange> time_range) :
+	string(string),
+	regex(regex),
+	time_range(time_range)
+{ }
+
 UserStats::UserStats(const Glib::ustring & alias) :
 	_alias(alias)
 { }
@@ -158,14 +164,22 @@ Users::Users(Glib::RefPtr<Gio::File> users_file, bool separate_userhosts) :
 							_str_replace(regex, "\\*", ".*");
 							_str_replace(regex, "\\?", ".?");
 
-							if (match_info.fetch_named("start_date").empty() && match_info.fetch_named("end_date").empty() && match_info.fetch_named("start_time").empty() && match_info.fetch_named("end_time").empty())
+							std::shared_ptr<TimeRange> time_range;
+
+							if (!match_info.fetch_named("start_date").empty() || !match_info.fetch_named("end_date").empty() || !match_info.fetch_named("start_time").empty() || !match_info.fetch_named("end_time").empty())
 							{
-								this->_unrestricted_nicks[tokens[i]] = Glib::Regex::create(regex);
+								time_range = std::make_shared<TimeRange>(match_info.fetch_named("start_date"), match_info.fetch_named("end_date"), match_info.fetch_named("start_time"), match_info.fetch_named("end_time"));
+							}
+
+							auto user_match = std::make_shared<UserMatch>(tokens[i], Glib::Regex::create(regex), time_range);
+
+							if (user_match->time_range)
+							{
+								this->_time_restricted_nicks.push_back(user_match);
 							}
 							else
 							{
-								auto time_range = std::make_shared<TimeRange>(match_info.fetch_named("start_date"), match_info.fetch_named("end_date"), match_info.fetch_named("start_time"), match_info.fetch_named("end_time"));
-								this->_time_restricted_nicks[tokens[i]] = std::make_pair(Glib::Regex::create(regex), time_range);
+								this->_insert_user_match(this->_unrestricted_nicks, user_match);
 							}
 						}
 
@@ -246,12 +260,13 @@ std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Gli
 	std::shared_ptr<TimeRange> user_time_range;
 
 	// Search for time-restricted nicknames, as new ones can pop up at any time.
-	for (auto pair : this->_time_restricted_nicks)
+	for (auto user_match : this->_time_restricted_nicks)
 	{
-		if (pair.second.first->match(nickuserhost) && pair.second.second->check(timestamp))
+		if (user_match->regex->match(nickuserhost) && user_match->time_range->check(timestamp))
 		{
-			user_key = pair.first;
-			user_time_range = pair.second.second;
+			user_key = user_match->string;
+			user_time_range = user_match->time_range;
+			break;
 		}
 	}
 
@@ -270,11 +285,12 @@ std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Gli
 	// Search for any unrestricted nicknames.
 	if (user_key.empty())
 	{
-		for (auto pair: this->_unrestricted_nicks)
+		for (auto user_match: this->_unrestricted_nicks)
 		{
-			if (pair.second->match(nickuserhost))
+			if (user_match->regex->match(nickuserhost))
 			{
-				user_key = pair.first;
+				user_key = user_match->string;
+				break;
 			}
 		}
 	}
@@ -296,4 +312,19 @@ std::shared_ptr<UserStats> Users::get_user(const Glib::ustring & nick, const Gli
 	}
 
 	return this->_users[user_key];
+}
+
+void Users::_insert_user_match(std::list<std::shared_ptr<UserMatch>> & user_matches, std::shared_ptr<UserMatch> user_match)
+{
+	auto iter = user_matches.begin();
+
+	for (; iter != user_matches.end(); iter++)
+	{
+		if ((*iter)->regex->match(user_match->string))
+		{
+			break;
+		}
+	}
+
+	user_matches.insert(iter, user_match);
 }

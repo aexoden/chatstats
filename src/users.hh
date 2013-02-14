@@ -34,6 +34,16 @@
 
 #include "time_range.hh"
 
+class UserMatch
+{
+	public:
+		UserMatch(const Glib::ustring & string, Glib::RefPtr<Glib::Regex> regex, std::shared_ptr<TimeRange> time_range);
+
+		Glib::ustring string;
+		Glib::RefPtr<Glib::Regex> regex;
+		std::shared_ptr<TimeRange> time_range;
+};
+
 class UserStats
 {
 	public:
@@ -71,12 +81,14 @@ class Users
 		std::shared_ptr<UserStats> get_user(const Glib::ustring & nick, const Glib::ustring & userhost, std::shared_ptr<const Glib::DateTime> timestamp);
 
 	private:
+		void _insert_user_match(std::list<std::shared_ptr<UserMatch>> & user_matches, std::shared_ptr<UserMatch> user_match);
+
 		bool _separate_userhosts;
 
 		std::unordered_map<std::string, std::shared_ptr<UserStats>> _users;
 
-		std::unordered_map<std::string, std::pair<Glib::RefPtr<Glib::Regex>, std::shared_ptr<TimeRange>>> _time_restricted_nicks;
-		std::unordered_map<std::string, Glib::RefPtr<Glib::Regex>> _unrestricted_nicks;
+		std::list<std::shared_ptr<UserMatch>> _time_restricted_nicks;
+		std::list<std::shared_ptr<UserMatch>> _unrestricted_nicks;
 
 		std::unordered_map<std::string, std::pair<std::shared_ptr<TimeRange>, std::string>> _user_cache;
 
