@@ -38,6 +38,8 @@ class GenerateOperation : public Operation
 		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
 
 	private:
+		Glib::RefPtr<Gio::File> _get_user_dir(const Glib::ustring & name);
+
 		void _output_css_default();
 
 		void _output_user_page(Glib::RefPtr<Gio::File> user_file, std::shared_ptr<UserStats> user);

@@ -123,6 +123,30 @@ Glib::ustring _encode_html_chars(Glib::ustring string)
 	return string;
 }
 
+Glib::ustring _urlify(const Glib::ustring & string)
+{
+	return Glib::Regex::create("[[:^alnum:]]+")->replace_literal(string, 0, "_", static_cast<Glib::RegexMatchFlags>(0));
+}
+
+Glib::RefPtr<Gio::File> GenerateOperation::_get_user_dir(const Glib::ustring & name)
+{
+	Glib::ustring url_name = _urlify(name);
+
+	int i = 0;
+	Glib::RefPtr<Gio::File> dir = Gio::File::create_for_path(Glib::build_filename(this->_users_directory->get_path(), url_name));
+
+	while (dir->query_exists())
+	{
+		i++;
+
+		dir = Gio::File::create_for_path(Glib::build_filename(this->_users_directory->get_path(), Glib::ustring::compose("%1-%2", url_name, i)));
+	}
+
+	dir->make_directory();
+
+	return dir;
+}
+
 void GenerateOperation::_output_css_default()
 {
 	Glib::RefPtr<Gio::File> css_directory = Gio::File::create_for_path(Glib::build_filename(this->_output_directory->get_path(), "css"));
@@ -147,7 +171,7 @@ void GenerateOperation::_output_user_page(Glib::RefPtr<Gio::File> user_file, std
 {
 	Glib::RefPtr<Gio::DataOutputStream> output_stream = Gio::DataOutputStream::create(user_file->create_file());
 
-	this->_output_html_header(output_stream, Glib::ustring::compose("Users &raquo; %1", _encode_html_chars(user->get_display_name())), "../");
+	this->_output_html_header(output_stream, Glib::ustring::compose("Users &raquo; %1", _encode_html_chars(user->get_display_name())), "../../");
 
 	output_stream->put_string("\t\t\t<table>\n");
 	output_stream->put_string("\t\t\t\t<thead>\n");
@@ -228,10 +252,10 @@ void GenerateOperation::_output_section_overall_ranking(Glib::RefPtr<Gio::DataOu
 
 		last_score = score;
 
-		Glib::ustring user_filename = Glib::ustring::compose("%1.html", count);
-		this->_output_user_page(Gio::File::create_for_path(Glib::build_filename(this->_users_directory->get_path(), user_filename)), pair.second);
+		Glib::RefPtr<Gio::File> user_dir = _get_user_dir(pair.second->get_display_name());
+		this->_output_user_page(Gio::File::create_for_path(Glib::build_filename(user_dir->get_path(), "index.html")), pair.second);
 
-		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td><a href=\"%2\">%3</a></td><td>%4</td><td>%5</td></tr>\n", rank, Glib::ustring::compose("users/%1", user_filename), _encode_html_chars(pair.second->get_display_name()), score, pair.second->get_nick_count()));
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td><a href=\"%2\">%3</a></td><td>%4</td><td>%5</td></tr>\n", rank, Glib::ustring::compose("users/%1/", user_dir->get_basename()), _encode_html_chars(pair.second->get_display_name()), score, pair.second->get_nick_count()));
 		count++;
 	}
 

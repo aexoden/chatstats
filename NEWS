@@ -1,6 +1,7 @@
 0.0.4 (????-??-??)
 ==================
 * Process specific user specifications before general ones.
+* Give each user a directory, rather than a single file.
 
 0.0.3 (2013-02-08)
 ==================
