@@ -35,6 +35,9 @@ Operation::Operation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<Lo
 	_reader(reader)
 { }
 
+Operation::~Operation()
+{ }
+
 void Operation::execute()
 {
 	this->_start_time = std::make_shared<const Glib::DateTime>(Glib::DateTime::create_now_utc());

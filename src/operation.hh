@@ -39,6 +39,7 @@ class Operation
 {
 	public:
 		Operation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader);
+		virtual ~Operation();
 
 		void execute();
 
