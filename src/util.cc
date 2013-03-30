@@ -20,32 +20,41 @@
  * SOFTWARE.
  */
 
-#include <glibmm/regex.h>
+#include "util.hh"
 
-#include "time_range.hh"
-
-bool TimeRange::check(std::shared_ptr<const Glib::DateTime> timestamp)
+void encode_character(Glib::ustring & string, char search, const Glib::ustring & replace)
 {
-	return this->_check(this->start_date, this->end_date, timestamp->format("%Y-%m-%d")) && this->_check(this->start_time, this->end_time, timestamp->format("%H:%M:%S"));
+	size_t pos = 0;
+
+	while ((pos = string.find(search, pos)) != std::string::npos)
+	{
+		string.replace(pos, 1, replace);
+		pos += replace.length();
+	}
 }
 
-bool TimeRange::_check(const Glib::ustring & start, const Glib::ustring & end, const Glib::ustring & value)
+Glib::ustring encode_html_characters(Glib::ustring string)
 {
-	if (start.empty() && end.empty())
-		return true;
-	if (start.empty())
-		return value < end;
-	else if (end.empty())
-		return value >= start;
-	else if (start <= end)
-		return value >= start && value < end;
-	else
-		return value >= start || value < end;
+	encode_character(string, '&', "&amp;");
+	encode_character(string, '<', "&lt;");
+	encode_character(string, '>', "&gt;");
+	encode_character(string, '"', "&quot;");
+
+	return string;
 }
 
-TimeRange::TimeRange(const Glib::ustring & start_date, const Glib::ustring & end_date, const Glib::ustring & start_time, const Glib::ustring & end_time) :
-	start_date(start_date),
-	end_date(end_date),
-	start_time(start_time),
-	end_time(end_time)
-{ }
+void string_replace(Glib::ustring & string, const Glib::ustring & search, const Glib::ustring & replace)
+{
+	size_t pos = 0;
+
+	while ((pos = string.find(search, pos)) != std::string::npos)
+	{
+		string.replace(pos, search.length(), replace);
+		pos += replace.length();
+	}
+}
+
+Glib::ustring urlify(const Glib::ustring & string)
+{
+	return Glib::Regex::create("[[:^alnum:]]+")->replace_literal(string, 0, "_", static_cast<Glib::RegexMatchFlags>(0));
+}

@@ -34,14 +34,14 @@ class TimeRange
 
 		bool check(std::shared_ptr<const Glib::DateTime> timestamp);
 
+		const Glib::ustring start_date;
+		const Glib::ustring end_date;
+
+		const Glib::ustring start_time;
+		const Glib::ustring end_time;
+
 	private:
 		bool _check(const Glib::ustring & start, const Glib::ustring & end, const Glib::ustring & value);
-
-		Glib::ustring _start_date;
-		Glib::ustring _end_date;
-
-		Glib::ustring _start_time;
-		Glib::ustring _end_time;
 };
 
 #endif // CHATSTATS_TIME_RANGE_HH

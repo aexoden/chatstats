@@ -25,41 +25,65 @@
 
 #include <giomm/dataoutputstream.h>
 
+#include "SQLiteC++.h"
+
 #include "operation.hh"
-#include "users.hh"
+#include "user_specification.hh"
 
 class GenerateOperation : public Operation
 {
 	public:
-		GenerateOperation(Glib::RefPtr<Gio::File> input_directory, std::shared_ptr<LogReader> reader, Glib::RefPtr<Gio::File> output_directory, Glib::RefPtr<Gio::File> users_file, bool debug_users, bool separate_userhosts);
+		GenerateOperation(const Glib::RefPtr<Gio::File> & input_directory, const std::shared_ptr<LogReader> & reader, const Glib::RefPtr<Gio::File> & output_directory, const Glib::RefPtr<Gio::File> & users_file, const bool debug, const bool separate_userhosts);
 
 	protected:
 		virtual void _cleanup();
 		virtual void _handle_sessions(const std::vector<std::shared_ptr<Session>> & sessions);
 
 	private:
-		Glib::RefPtr<Gio::File> _get_user_dir(const Glib::ustring & name);
+		void _initialize_database();
+		void _initialize_database_tables();
+		void _initialize_database_queries();
 
-		void _output_css_default();
+		void _apply_users_file();
+		std::vector<std::shared_ptr<UserSpecification>> _parse_users_file() const;
 
-		void _output_user_page(Glib::RefPtr<Gio::File> user_file, std::shared_ptr<UserStats> user);
+		Glib::RefPtr<Gio::File> _get_user_directory(const Glib::ustring & alias) const;
 
-		void _output_html_header(Glib::RefPtr<Gio::DataOutputStream> output_stream, const Glib::ustring & title, const Glib::ustring & media_prefix = "");
-		void _output_html_footer(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+		void _assign_aliases();
+		void _create_undeclared_users();
 
-		void _output_section_overall_ranking(Glib::RefPtr<Gio::DataOutputStream> output_stream);
+		void _output_css_default() const;
 
-		Glib::RefPtr<Gio::File> _output_directory;
-		Glib::RefPtr<Gio::File> _users_directory;
+		void _output_html_index();
+		void _output_html_header(const Glib::RefPtr<Gio::DataOutputStream> & output_stream, const Glib::ustring & title, const Glib::ustring & media_prefix = "") const;
+		void _output_html_footer(const Glib::RefPtr<Gio::DataOutputStream> & output_stream) const;
+
+		void _output_html_user_index(const Glib::RefPtr<Gio::File> & user_file, const int user_id);
+
+		void _output_html_section_overall_ranking(const Glib::RefPtr<Gio::DataOutputStream> & output_stream);
+
+		int _get_nickuserhost_id(const User & user);
+
+		void _print_debug_info();
+
+		const Glib::RefPtr<const Gio::File> _output_directory;
+		const Glib::RefPtr<Gio::File> _users_directory;
+
+		const Glib::RefPtr<Gio::File> _users_file;
+
 		Glib::ustring _target;
 
-		Users _users;
+		SQLite::Database _database;
 
-		bool _debug_users;
+		std::shared_ptr<SQLite::Statement> _nickuserhost_insert_query;
 
-		std::unordered_map<std::string, std::string> _userhost_cache;
+		std::unordered_map<std::string, std::string> _userhosts;
+		std::unordered_map<std::string, int> _nickuserhost_ids;
 
 		std::shared_ptr<const Glib::DateTime> _last_session_stop;
+
+		const bool _separate_userhosts;
+		const bool _debug;
 };
 
 #endif // CHATSTATS_GENERATE_OPERATION_HH

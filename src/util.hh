@@ -20,32 +20,16 @@
  * SOFTWARE.
  */
 
+#ifndef CHATSTATS_UTIL_HH
+#define CHATSTATS_UTIL_HH
+
 #include <glibmm/regex.h>
+#include <glibmm/ustring.h>
 
-#include "time_range.hh"
+void encode_character(Glib::ustring & string, char search, const Glib::ustring & replace);
+Glib::ustring encode_html_characters(Glib::ustring string);
 
-bool TimeRange::check(std::shared_ptr<const Glib::DateTime> timestamp)
-{
-	return this->_check(this->start_date, this->end_date, timestamp->format("%Y-%m-%d")) && this->_check(this->start_time, this->end_time, timestamp->format("%H:%M:%S"));
-}
+void string_replace(Glib::ustring & string, const Glib::ustring & search, const Glib::ustring & replace);
+Glib::ustring urlify(const Glib::ustring & string);
 
-bool TimeRange::_check(const Glib::ustring & start, const Glib::ustring & end, const Glib::ustring & value)
-{
-	if (start.empty() && end.empty())
-		return true;
-	if (start.empty())
-		return value < end;
-	else if (end.empty())
-		return value >= start;
-	else if (start <= end)
-		return value >= start && value < end;
-	else
-		return value >= start || value < end;
-}
-
-TimeRange::TimeRange(const Glib::ustring & start_date, const Glib::ustring & end_date, const Glib::ustring & start_time, const Glib::ustring & end_time) :
-	start_date(start_date),
-	end_date(end_date),
-	start_time(start_time),
-	end_time(end_time)
-{ }
+#endif // CHATSTATS_UTIL_HH

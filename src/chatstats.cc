@@ -56,12 +56,12 @@ int main(int argc, char **argv)
 	Glib::ustring input_format = "chatstats";
 	Glib::ustring users_filename = "";
 
-	bool debug_users = false;
+	bool debug = false;
 	bool separate_userhosts = false;
 
 	Glib::OptionGroup option_group("options", "Options", "Options to configure program");
-	Glib::OptionEntry debug_users_entry = create_option_entry("debug-users", 'd', "Debug user nickname linking");
-	option_group.add_entry(debug_users_entry, debug_users);
+	Glib::OptionEntry debug_entry = create_option_entry("debug", 'd', "Output additional debug information");
+	option_group.add_entry(debug_entry, debug);
 
 	Glib::OptionEntry separate_userhosts_entry = create_option_entry("separate-userhosts", 's', "Whether to separate users by userhost");
 	option_group.add_entry(separate_userhosts_entry, separate_userhosts);
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 
 		output_directory->make_directory();
 
-		GenerateOperation operation(input_directory, log_reader, output_directory, users_file, debug_users, separate_userhosts);
+		GenerateOperation operation(input_directory, log_reader, output_directory, users_file, debug, separate_userhosts);
 		operation.execute();
 	}
 	else

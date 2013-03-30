@@ -1,4 +1,6 @@
 include_rules
 
+CXXFLAGS += -ISQLiteCpp
+
 : foreach *.cc |> !cxx |>
-: *.o |> g++ $(LDFLAGS) %f -o %o |> chatstats
+: *.o SQLiteCpp/libSQLiteCpp.a |> g++ $(LDFLAGS) %f -o %o |> chatstats

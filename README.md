@@ -71,7 +71,7 @@ directory, so you should add these files after the HTML is generated.
 
 These are the available options:
 
-#### `--debug-users`
+#### `--debug`
 
 This option prints out a debug report to help identify important nicknames that
 have not been explicitly assigned to a user in the users file.
@@ -177,6 +177,7 @@ chatstats has the following dependencies:
 * [GCC 4.6+](http://www.gcc.org)
 * [glibmm 2.28](http://www.gtkmm.org)
 * [tup](http://gittup.org/tup/)
+* [SQLite 3+](http://www.sqlite.org)
 
 To build chatstats, ensure dependencies are installed, change to the directory
 containing the chatstats sources, and execute `./build`. chatstats should be
