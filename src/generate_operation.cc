@@ -418,7 +418,7 @@ void GenerateOperation::_output_css_default() const
 	Glib::RefPtr<Gio::DataOutputStream> output_stream = Gio::DataOutputStream::create(output_file->create_file());
 
 	output_stream->put_string(
-R"EOF(/* chatstats default CSS *
+R"EOF(/* chatstats default CSS */
 
 body {
 	margin: auto;
@@ -541,7 +541,7 @@ void GenerateOperation::_output_html_section_overall_ranking(const Glib::RefPtr<
 		const Glib::RefPtr<Gio::File> user_directory = this->_get_user_directory(alias);
 		this->_output_html_user_index(Gio::File::create_for_path(Glib::build_filename(user_directory->get_path(), "index.html")), user_id);
 
-		output_stream->put_string(Glib::ustring::compose("\t\t\t\t<tr><td>%1</td><td><a href=\"%2\">%3</a></td><td>%4</td><td>%5</td></tr>\n", current_rank, Glib::ustring::compose("users/%1/", user_directory->get_basename()), encode_html_characters(alias), score, nick_counts[user_id]));
+		output_stream->put_string(Glib::ustring::compose("\t\t\t\t\t<tr><td>%1</td><td><a href=\"%2\">%3</a></td><td>%4</td><td>%5</td></tr>\n", current_rank, Glib::ustring::compose("users/%1/", user_directory->get_basename()), encode_html_characters(alias), score, nick_counts[user_id]));
 
 		last_score = score;
 		index++;
