@@ -42,14 +42,18 @@ GenerateOperation::GenerateOperation(const Glib::RefPtr<Gio::File> & input_direc
 {
 	this->_initialize_database();
 	this->_users_directory->make_directory();
+	this->_load_users_file();
+	std::cout << "Processing files..." << std::endl;
 }
 
 void GenerateOperation::_cleanup()
 {
+	this->_initialize_database_indexes();
 	this->_apply_users_file();
 	this->_create_undeclared_users();
 	this->_assign_aliases();
 
+	std::cout << "Generating output" << std::endl;
 	this->_output_css_default();
 	this->_output_html_index();
 
@@ -62,12 +66,12 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 	SQLite::Transaction transaction(this->_database);
 	SQLite::Statement insert_event_query(this->_database, "INSERT INTO events (type, timestamp, subject_nickuserhost_id, object_nickuserhost_id, message) VALUES (:type, :timestamp, :subject_nickuserhost_id, :object_nickuserhost_id, :message)");
 
-	for (auto session: sessions)
+	for (auto & session: sessions)
 	{
 		if (!this->_last_session_stop || (session->start->to_unix() > this->_last_session_stop->to_unix() + 600))
 			this->_userhosts.clear();
 
-		for (auto event : session->events)
+		for (auto & event : session->events)
 		{
 			const int subject_nickuserhost_id = this->_get_nickuserhost_id(event->subject);
 
@@ -106,6 +110,8 @@ void GenerateOperation::_handle_sessions(const std::vector<std::shared_ptr<Sessi
 void GenerateOperation::_initialize_database()
 {
 	this->_database.exec("PRAGMA case_sensitive_like = TRUE");
+	this->_database.exec("PRAGMA foreign_keys = TRUE");
+
 	this->_initialize_database_tables();
 	this->_initialize_database_queries();
 }
@@ -115,32 +121,27 @@ void GenerateOperation::_initialize_database_tables()
 	this->_database.exec(R"EOF(
 		CREATE TABLE events (
 			id INTEGER PRIMARY KEY,
-			type INTEGER,
-			timestamp TEXT,
-			subject_nickuserhost_id INTEGER,
-			object_nickuserhost_id INTEGER,
+			type INTEGER NOT NULL,
+			timestamp TEXT NOT NULL,
+			subject_nickuserhost_id INTEGER REFERENCES nickuserhosts(id),
+			object_nickuserhost_id INTEGER REFERENCES nickuserhosts(id),
 			message TEXT
 		);
-
-		CREATE INDEX subject_nickuserhost_id_index ON events (subject_nickuserhost_id ASC);
-		CREATE INDEX object_nickuserhost_id_index ON events (object_nickuserhost_id ASC);
 	)EOF");
 
 	this->_database.exec(R"EOF(
 		CREATE TABLE nickuserhosts (
 			id INTEGER PRIMARY KEY,
-			user_id INTEGER,
-			nickuserhost TEXT
+			user_id INTEGER REFERENCES users(id),
+			nickuserhost TEXT NOT NULL
 		);
-
-		CREATE INDEX user_id_index ON nickuserhosts (user_id ASC);
 	)EOF");
 
 	this->_database.exec(R"EOF(
 		CREATE TABLE users (
 			id INTEGER PRIMARY KEY,
 			alias TEXT,
-			automatic INTEGER
+			automatic INTEGER NOT NULL
 		)
 	)EOF");
 
@@ -152,107 +153,113 @@ void GenerateOperation::_initialize_database_tables()
 	)EOF");
 }
 
+void GenerateOperation::_initialize_database_indexes()
+{
+	std::cout << "Creating indexes..." << std::endl;
+
+	this->_database.exec(R"EOF(
+		CREATE INDEX subject_nickuserhost_id_index ON events (subject_nickuserhost_id ASC);
+		CREATE INDEX object_nickuserhost_id_index ON events (object_nickuserhost_id ASC);
+		CREATE INDEX timestamp_index ON events (timestamp ASC);
+
+		CREATE INDEX user_id_index ON nickuserhosts (user_id ASC);
+	)EOF");
+}
+
 void GenerateOperation::_initialize_database_queries()
 {
-	this->_nickuserhost_insert_query = std::make_shared<SQLite::Statement>(this->_database, "INSERT INTO nickuserhosts (nickuserhost) VALUES (:nickuserhost)");
+	this->_nickuserhost_insert_query = std::make_shared<SQLite::Statement>(this->_database, "INSERT INTO nickuserhosts (user_id, nickuserhost) VALUES (:user_id, :nickuserhost)");
+}
+
+void GenerateOperation::_insert_nick_specification(std::list<std::pair<std::shared_ptr<const NickSpecification>, int>> & nick_specifications, const std::shared_ptr<const NickSpecification> & nick_specification, const int user_id)
+{
+	auto iter = nick_specifications.begin();
+
+	for (; iter != nick_specifications.end(); iter++)
+		if (iter->first->regex->match(nick_specification->nickuserhost_specification))
+			break;
+
+	nick_specifications.insert(iter, std::make_pair(nick_specification, user_id));
+}
+
+void GenerateOperation::_load_users_file()
+{
+	std::cout << "Loading users file..." << std::endl;
+
+	SQLite::Transaction transaction(this->_database);
+	SQLite::Statement query(this->_database, "INSERT INTO users (alias, automatic) VALUES (:alias, 0)");
+
+	int current_user_id = -1;
+
+	for (auto & user : this->_parse_users_file())
+	{
+		query.bind(":alias", user->alias);
+		query.exec();
+		query.reset();
+
+		current_user_id = this->_database.getLastInsertRowid();
+
+		for (auto & nick_specification : user->nick_specifications)
+		{
+			if (nick_specification->time_range)
+				this->_insert_nick_specification(this->_timed_nick_specifications, nick_specification, current_user_id);
+			else
+				this->_insert_nick_specification(this->_untimed_nick_specifications, nick_specification, current_user_id);
+		}
+	}
+
+	transaction.commit();
 }
 
 void GenerateOperation::_apply_users_file()
 {
-	if (!this->_users_file || !this->_users_file->query_exists())
-		return;
+	std::cout << "Applying users file..." << std::endl;
 
 	SQLite::Transaction transaction(this->_database);
-	SQLite::Statement insert_user_query(this->_database, "INSERT INTO users (alias, automatic) VALUES (:alias, 0)");
+	auto query = std::make_shared<SQLite::Statement>(this->_database, "SELECT id, nickuserhost FROM nickuserhosts");
 
-	std::list<std::pair<std::shared_ptr<const NickSpecification>, int>> nick_specifications;
+	std::vector<std::pair<int, std::string>> nickuserhosts;
 
-	int current_user_id = -1;
+	while (query->executeStep())
+		nickuserhosts.push_back(std::make_pair(query->getColumn(0).getInt(), query->getColumn(1).getText()));
 
-	for (auto user : this->_parse_users_file())
-	{
-		insert_user_query.bind(":alias", user->alias);
-		insert_user_query.exec();
-		insert_user_query.reset();
-
-		current_user_id = this->_database.getLastInsertRowid();
-
-		for (auto nick_specification : user->nick_specifications)
-		{
-			auto iter = nick_specifications.begin();
-
-			for (; iter != nick_specifications.end(); iter++)
-				if (iter->first->get_regex()->match(nick_specification->nickuserhost_specification) || (nick_specification->time_range && !iter->first->time_range))
-					break;
-
-			nick_specifications.insert(iter, std::make_pair(nick_specification, current_user_id));
-		}
-	}
-
-	SQLite::Statement select_nickuserhost_query(this->_database, "SELECT n.id, n.nickuserhost FROM events e, nickuserhosts n WHERE DATE(e.timestamp) >= :start_date AND DATE(e.timestamp) < :end_date AND TIME(e.timestamp) >= :start_time AND TIME(e.timestamp) < :end_time AND (e.subject_nickuserhost_id = n.id OR e.object_nickuserhost_id = n.id) AND n.nickuserhost LIKE :like_expression ESCAPE '!' GROUP BY n.id");
 	SQLite::Statement insert_nickuserhost_query(this->_database, "INSERT INTO nickuserhosts (user_id, nickuserhost) VALUES (:user_id, :nickuserhost)");
-	SQLite::Statement update_nickuserhost_query(this->_database, "UPDATE nickuserhosts SET user_id = :user_id WHERE user_id IS NULL AND nickuserhost LIKE :like_expression ESCAPE '!'");
+	SQLite::Statement update_nickuserhost_query(this->_database, "UPDATE nickuserhosts SET user_id = :user_id WHERE id = :nickuserhost_id");
+	Glib::ustring update_events_query_template("UPDATE events SET %1_nickuserhost_id = :new_nickuserhost_id WHERE %1_nickuserhost_id = :nickuserhost_id AND %2");
 
-	Glib::ustring update_event_query_string("UPDATE events SET %1_nickuserhost_id = :new_nickuserhost_id WHERE %1_nickuserhost_id = :nickuserhost_id AND DATE(timestamp) >= :start_date AND DATE(timestamp) < :end_date AND TIME(timestamp) >= :start_time AND TIME(timestamp) < :end_time");
-
-	std::vector<std::shared_ptr<SQLite::Statement>> update_event_queries;
-	update_event_queries.push_back(std::make_shared<SQLite::Statement>(this->_database, Glib::ustring::compose(update_event_query_string, "subject").data()));
-	update_event_queries.push_back(std::make_shared<SQLite::Statement>(this->_database, Glib::ustring::compose(update_event_query_string, "object").data()));
-
-	for (auto pair : nick_specifications)
+	for (auto & spec_pair : this->_timed_nick_specifications)
 	{
-		auto nick_specification = pair.first;
-		const int user_id = pair.second;
+		const auto & nick_specification = spec_pair.first;
+		const int user_id = spec_pair.second;
 
-		if (nick_specification->time_range)
+		Glib::ustring time_range_expression = nick_specification->time_range->get_sql_expression();
+
+		std::vector<std::shared_ptr<SQLite::Statement>> update_events_queries;
+		update_events_queries.push_back(std::make_shared<SQLite::Statement>(this->_database, Glib::ustring::compose(update_events_query_template, "subject", time_range_expression).data()));
+		update_events_queries.push_back(std::make_shared<SQLite::Statement>(this->_database, Glib::ustring::compose(update_events_query_template, "object", time_range_expression).data()));
+
+		for (auto & pair : nickuserhosts)
 		{
-			select_nickuserhost_query.bind(":start_date", nick_specification->time_range->start_date);
-			select_nickuserhost_query.bind(":end_date", nick_specification->time_range->end_date);
-			select_nickuserhost_query.bind(":start_time", nick_specification->time_range->start_time);
-			select_nickuserhost_query.bind(":end_time", nick_specification->time_range->end_time);
-			select_nickuserhost_query.bind(":like_expression", nick_specification->get_like_expression());
+			const int nickuserhost_id = pair.first;
+			const Glib::ustring & nickuserhost = pair.second;
 
-			std::vector<std::pair<int, std::string>> nickuserhosts;
-
-			while (select_nickuserhost_query.executeStep())
-				nickuserhosts.push_back(std::make_pair(select_nickuserhost_query.getColumn(0).getInt(), select_nickuserhost_query.getColumn(1).getText()));
-
-			select_nickuserhost_query.reset();
-
-			for (auto pair : nickuserhosts)
+			if (nick_specification->regex->match(nickuserhost))
 			{
-				const int nickuserhost_id = pair.first;
-				const Glib::ustring & nickuserhost(pair.second);
-
 				insert_nickuserhost_query.bind(":user_id", user_id);
 				insert_nickuserhost_query.bind(":nickuserhost", nickuserhost);
-
 				insert_nickuserhost_query.exec();
 				insert_nickuserhost_query.reset();
 
 				const int new_nickuserhost_id = this->_database.getLastInsertRowid();
 
-				for (auto query : update_event_queries)
+				for (auto & query : update_events_queries)
 				{
-					query->bind(":nickuserhost_id", nickuserhost_id);
 					query->bind(":new_nickuserhost_id", new_nickuserhost_id);
-					query->bind(":start_date", nick_specification->time_range->start_date);
-					query->bind(":end_date", nick_specification->time_range->end_date);
-					query->bind(":start_time", nick_specification->time_range->start_time);
-					query->bind(":end_time", nick_specification->time_range->end_time);
-
+					query->bind(":nickuserhost_id", nickuserhost_id);
 					query->exec();
 					query->reset();
 				}
 			}
-		}
-		else
-		{
-			update_nickuserhost_query.bind(":user_id", user_id);
-			update_nickuserhost_query.bind(":like_expression", nick_specification->get_like_expression());
-
-			update_nickuserhost_query.exec();
-			update_nickuserhost_query.reset();
 		}
 	}
 
@@ -261,10 +268,14 @@ void GenerateOperation::_apply_users_file()
 
 std::vector<std::shared_ptr<UserSpecification>> GenerateOperation::_parse_users_file() const
 {
+	std::vector<std::shared_ptr<UserSpecification>> users;
+
+	if (!this->_users_file || !this->_users_file->query_exists())
+		return users;
+
 	auto users_stream = Gio::DataInputStream::create(this->_users_file->read());
 	std::string line;
 
-	std::vector<std::shared_ptr<UserSpecification>> users;
 	std::shared_ptr<UserSpecification> user;
 
 	while (users_stream->read_line(line))
@@ -316,8 +327,10 @@ Glib::RefPtr<Gio::File> GenerateOperation::_get_user_directory(const Glib::ustri
 
 void GenerateOperation::_assign_aliases()
 {
+	std::cout << "Assigning aliases" << std::endl;
+
 	SQLite::Transaction transaction(this->_database);
-	SQLite::Statement select_query(this->_database, "SELECT u.id, SUBSTR(n.nickuserhost, 0, INSTR(n.nickuserhost, '!')), COUNT(*) FROM nickuserhosts n, users u LEFT OUTER JOIN events e ON e.subject_nickuserhost_id = n.id AND (e.type == :action_type OR e.type == :message_type) WHERE n.user_id = u.id AND u.alias = '' GROUP BY n.id;");
+	SQLite::Statement select_query(this->_database, "SELECT u.id, SUBSTR(n.nickuserhost, 0, INSTR(n.nickuserhost, '!')) AS nick, COUNT(*) FROM nickuserhosts n, users u LEFT OUTER JOIN events e ON e.subject_nickuserhost_id = n.id AND (e.type == :action_type OR e.type == :message_type) WHERE n.user_id = u.id AND u.alias = '' GROUP BY u.id, nick;");
 
 	std::unordered_map<int, std::pair<std::string, int>> aliases;
 
@@ -335,7 +348,7 @@ void GenerateOperation::_assign_aliases()
 
 	SQLite::Statement update_query(this->_database, "UPDATE users SET alias = :alias WHERE id = :user_id");
 
-	for (auto pair : aliases)
+	for (auto & pair : aliases)
 	{
 		const int user_id = pair.first;
 		Glib::ustring alias = pair.second.first;
@@ -352,6 +365,8 @@ void GenerateOperation::_assign_aliases()
 
 void GenerateOperation::_create_undeclared_users()
 {
+	std::cout << "Creating undeclared users" << std::endl;
+
 	SQLite::Transaction transaction(this->_database);
 
 	if (this->_separate_userhosts)
@@ -365,7 +380,7 @@ void GenerateOperation::_create_undeclared_users()
 		SQLite::Statement insert_query(this->_database, "INSERT INTO users (alias, automatic) VALUES (:alias, 1)");
 		SQLite::Statement update_query(this->_database, "UPDATE nickuserhosts SET user_id = :user_id WHERE id = :id");
 
-		for (auto pair : nickuserhosts)
+		for (auto & pair : nickuserhosts)
 		{
 			insert_query.bind(":alias", pair.second);
 			insert_query.exec();
@@ -565,10 +580,24 @@ int GenerateOperation::_get_nickuserhost_id(const User & user)
 	if (this->_userhosts.count(user.nick) == 0)
 		this->_userhosts[user.nick] = "@";
 
-	const std::string nickuserhost(Glib::ustring::compose("%1!%2", user.nick, this->_userhosts[user.nick]));
+	std::string nickuserhost(user.nick + '!' + this->_userhosts[user.nick]);
 
 	if (this->_nickuserhost_ids.count(nickuserhost) == 0)
 	{
+		this->_nickuserhost_insert_query->bind(":user_id");
+
+		for (auto & pair : this->_untimed_nick_specifications)
+		{
+			const auto & nick_specification = pair.first;
+			const int user_id = pair.second;
+
+			if (nick_specification->regex->match(nickuserhost))
+			{
+				this->_nickuserhost_insert_query->bind(":user_id", user_id);
+				break;
+			}
+		}
+
 		this->_nickuserhost_insert_query->bind(":nickuserhost", nickuserhost);
 		this->_nickuserhost_insert_query->exec();
 		this->_nickuserhost_insert_query->reset();

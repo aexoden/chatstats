@@ -146,7 +146,7 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 {
 	Glib::MatchInfo match_info;
 
-	for (auto regex : this->_regex_event)
+	for (auto & regex : this->_regex_event)
 	{
 		if (regex.second->match(line, match_info))
 		{
@@ -157,6 +157,12 @@ std::shared_ptr<const Event> LogReader::_parse_line(const Glib::ustring & line)
 				this->_add_warning("Invalid or missing timestamp");
 				return nullptr;
 			}
+
+			if ((regex.first != EventType::PARSE_IGNORE && regex.first != EventType::PARSE_SESSION_START && regex.first != EventType::PARSE_SESSION_STOP  && regex.first != EventType::PARSE_SESSION_TARGET) && match_info.fetch_named("subject_nick").empty())
+				this->_add_warning("Empty subject nickname");
+
+			if ((regex.first == EventType::KICK || regex.first == EventType::NICK_CHANGE) && match_info.fetch_named("object_nick").empty())
+				this->_add_warning("Empty object nickname");
 
 			User subject(match_info.fetch_named("subject_nick"), match_info.fetch_named("subject_user"), match_info.fetch_named("subject_host"));
 			User object(match_info.fetch_named("object_nick"), match_info.fetch_named("object_user"), match_info.fetch_named("object_host"));
@@ -177,7 +183,7 @@ std::shared_ptr<const Glib::DateTime> LogReader::_parse_timestamp(const Glib::us
 {
 	Glib::MatchInfo match_info;
 
-	for (auto regex : this->_regex_timestamp)
+	for (auto & regex : this->_regex_timestamp)
 	{
 		if (regex->match(data, match_info))
 		{

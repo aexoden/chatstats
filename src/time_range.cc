@@ -24,28 +24,32 @@
 
 #include "time_range.hh"
 
-bool TimeRange::check(std::shared_ptr<const Glib::DateTime> timestamp)
-{
-	return this->_check(this->start_date, this->end_date, timestamp->format("%Y-%m-%d")) && this->_check(this->start_time, this->end_time, timestamp->format("%H:%M:%S"));
-}
-
-bool TimeRange::_check(const Glib::ustring & start, const Glib::ustring & end, const Glib::ustring & value)
-{
-	if (start.empty() && end.empty())
-		return true;
-	if (start.empty())
-		return value < end;
-	else if (end.empty())
-		return value >= start;
-	else if (start <= end)
-		return value >= start && value < end;
-	else
-		return value >= start || value < end;
-}
-
 TimeRange::TimeRange(const Glib::ustring & start_date, const Glib::ustring & end_date, const Glib::ustring & start_time, const Glib::ustring & end_time) :
 	start_date(start_date),
 	end_date(end_date),
 	start_time(start_time),
 	end_time(end_time)
 { }
+
+Glib::ustring TimeRange::get_sql_expression() const
+{
+	Glib::ustring expression;
+
+	this->_append_sql_expression(expression, "DATE(timestamp) >= '%1'", this->start_date);
+	this->_append_sql_expression(expression, "DATE(timestamp) < '%1'", this->end_date);
+	this->_append_sql_expression(expression, "TIME(timestamp) >= '%1'", this->start_time);
+	this->_append_sql_expression(expression, "TIME(timestamp) < '%1'", this->end_time);
+
+	return expression;
+}
+
+void TimeRange::_append_sql_expression(Glib::ustring & expression, const Glib::ustring & parameter_template, const Glib::ustring & value) const
+{
+	if (!value.empty())
+	{
+		if (!expression.empty())
+			expression += " AND ";
+
+		expression += Glib::ustring::compose(parameter_template, value);
+	}
+}

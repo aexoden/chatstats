@@ -50,20 +50,15 @@ NickSpecification::NickSpecification(const Glib::ustring & specification) :
 			Glib::ustring start_time = match_info.fetch_named("start_time");
 			Glib::ustring end_time = match_info.fetch_named("end_time");
 
-			if (start_date.empty())
-				start_date = "0000-00-00";
-
-			if (end_date.empty())
-				end_date = "9999-12-31";
-
-			if (start_time.empty())
-				start_time = "00:00:00";
-
-			if (end_time.empty())
-				end_time = "23:59:59";
-
 			this->time_range = std::make_shared<TimeRange>(start_date, end_date, start_time, end_time);
 		}
+
+		Glib::ustring regex_string = Glib::ustring::compose("^%1$", Glib::Regex::escape_string(this->nickuserhost_specification));
+
+		string_replace(regex_string, "\\*", ".*");
+		string_replace(regex_string, "\\?", ".?");
+
+		this->regex = Glib::Regex::create(regex_string);
 	}
 }
 
@@ -78,14 +73,4 @@ Glib::ustring NickSpecification::get_like_expression() const
 	string_replace(expression, "?", "_");
 
 	return expression;
-}
-
-Glib::RefPtr<Glib::Regex> NickSpecification::get_regex() const
-{
-	Glib::ustring regex_string = Glib::Regex::escape_string(this->nickuserhost_specification);
-
-	string_replace(regex_string, "\\*", ".*");
-	string_replace(regex_string, "\\?", ".?");
-
-	return Glib::Regex::create(regex_string);
 }

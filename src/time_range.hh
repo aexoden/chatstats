@@ -32,7 +32,7 @@ class TimeRange
 	public:
 		TimeRange(const Glib::ustring & start_date, const Glib::ustring & end_date, const Glib::ustring & start_time, const Glib::ustring & end_time);
 
-		bool check(std::shared_ptr<const Glib::DateTime> timestamp);
+		Glib::ustring get_sql_expression() const;
 
 		const Glib::ustring start_date;
 		const Glib::ustring end_date;
@@ -41,7 +41,7 @@ class TimeRange
 		const Glib::ustring end_time;
 
 	private:
-		bool _check(const Glib::ustring & start, const Glib::ustring & end, const Glib::ustring & value);
+		void _append_sql_expression(Glib::ustring & expression, const Glib::ustring & parameter_template, const Glib::ustring & value) const;
 };
 
 #endif // CHATSTATS_TIME_RANGE_HH

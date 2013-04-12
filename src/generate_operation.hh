@@ -42,8 +42,12 @@ class GenerateOperation : public Operation
 	private:
 		void _initialize_database();
 		void _initialize_database_tables();
+		void _initialize_database_indexes();
 		void _initialize_database_queries();
 
+		void _insert_nick_specification(std::list<std::pair<std::shared_ptr<const NickSpecification>, int>> & nick_specifications, const std::shared_ptr<const NickSpecification> & nick_specification, const int user_id);
+
+		void _load_users_file();
 		void _apply_users_file();
 		std::vector<std::shared_ptr<UserSpecification>> _parse_users_file() const;
 
@@ -76,6 +80,9 @@ class GenerateOperation : public Operation
 		SQLite::Database _database;
 
 		std::shared_ptr<SQLite::Statement> _nickuserhost_insert_query;
+
+		std::list<std::pair<std::shared_ptr<const NickSpecification>, int>> _timed_nick_specifications;
+		std::list<std::pair<std::shared_ptr<const NickSpecification>, int>> _untimed_nick_specifications;
 
 		std::unordered_map<std::string, std::string> _userhosts;
 		std::unordered_map<std::string, int> _nickuserhost_ids;

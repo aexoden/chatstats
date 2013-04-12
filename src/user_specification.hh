@@ -37,12 +37,15 @@ class NickSpecification
 		NickSpecification(const Glib::ustring & specification);
 
 		Glib::ustring get_like_expression() const;
-		Glib::RefPtr<Glib::Regex> get_regex() const;
+
+		Glib::RefPtr<Glib::Regex> regex;
 
 		const Glib::ustring specification;
 		Glib::ustring nickuserhost_specification;
 
 		std::shared_ptr<const TimeRange> time_range;
+
+
 };
 
 class UserSpecification

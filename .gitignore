@@ -1,4 +1,5 @@
 *.o
 /.tup
 /src/chatstats
+/src/SQLiteCpp/libSQLiteCpp.a
 /src/version.hh
