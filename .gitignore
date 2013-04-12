@@ -1,4 +1,5 @@
 *.o
+*.swp
 /.tup
 /src/chatstats
 /src/SQLiteCpp/libSQLiteCpp.a
