@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
+
+    <title>Chatstats by aexoden</title>
+  </head>
+
+  <body>
+
+    <header>
+      <div class="container">
+        <h1>Chatstats</h1>
+        <h2>Generates statistics for a chat room, especially IRC channels.</h2>
+
+        <section id="downloads">
+          <a href="https://github.com/aexoden/chatstats/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/aexoden/chatstats/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/aexoden/chatstats" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
+
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a id="chatstats" class="anchor" href="#chatstats" aria-hidden="true"><span class="octicon octicon-link"></span></a>chatstats</h1>
+
+<p>chatstats is a tool for generating HTML statistics from the logs from some kind
+of chat room (generally an IRC channel). Ultimately, it is intended to be
+similar to the following projects:</p>
+
+<ul>
+<li><a href="http://humdi.net/ircstats/">IRCStats</a></li>
+<li><a href="http://www.nic.fi/%7Emauvinen/mircstats/">mIRCStats</a></li>
+<li><a href="http://pisg.sourceforge.net/">pisg</a></li>
+</ul>
+
+<p>chatstats is currently nowhere near as powerful as any of these other solutions,
+so feel free to try them out.</p>
+
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span class="octicon octicon-link"></span></a>Usage</h2>
+
+<p><code>chatstats [OPTION...] [COMMAND] [COMMAND-PARAMETERS]...</code></p>
+
+<h3>
+<a id="commands" class="anchor" href="#commands" aria-hidden="true"><span class="octicon octicon-link"></span></a>Commands</h3>
+
+<p>The heart of chatstats is the set of various commands it understands. Several
+commands are either remnants of earlier development or built for more esoteric
+purposes, while the <code>generate</code> command is the primary one used for generating
+HTML statistics. Nonetheless, the following commands are currently available:</p>
+
+<h4>
+<a id="convert" class="anchor" href="#convert" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>convert</code>
+</h4>
+
+<p><code>convert [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]</code></p>
+
+<p>Converts the logs in the given input directory into chatstats' native format.
+The given output directory must not already exist (as a safety precaution).</p>
+
+<h4>
+<a id="count" class="anchor" href="#count" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>count</code>
+</h4>
+
+<p><code>count [INPUT-DIRECTORY]</code></p>
+
+<p>Counts and lists the number of lines (taken as the number of messages plus the
+number of actions) on each day for the set of log files in the given input
+directory.</p>
+
+<h4>
+<a id="coverage" class="anchor" href="#coverage" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>coverage</code>
+</h4>
+
+<p><code>coverage [INPUT-DIRECTORY]</code></p>
+
+<p>Displays coverage statistics for the logs in the given input directory. That is,
+it reports on how complete the logs are (as a percentage of the total time
+spanned) and also displays some of the largest gaps in coverage.</p>
+
+<h4>
+<a id="frequency" class="anchor" href="#frequency" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>frequency</code>
+</h4>
+
+<p><code>frequency [INPUT-DIRECTORY] [TARGET]</code></p>
+
+<p>Finds words in logs in the given input directory that occur roughly as often as
+specified by the target period (in seconds). It excludes words that ever have
+a gap longer than eight times the given period, and ranks the remaining words by
+their difference to the target. (This command is more esoteric, used for finding
+suitable words for a secret word game.)</p>
+
+<h4>
+<a id="generate" class="anchor" href="#generate" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>generate</code>
+</h4>
+
+<p><code>generate [INPUT-DIRECTORY] [OUTPUT-DIRECTORY]</code></p>
+
+<p>Generates HTML statistics for the logs in the given input directory and writes
+the HTML files to the given output directory. The output directory must not
+already exist. The generated HTML files assume that
+<a href="http://www.blueprintcss.org/">Blueprint</a> is available in the <code>css/blueprint</code>
+directory, so you should add these files after the HTML is generated.</p>
+
+<h3>
+<a id="options" class="anchor" href="#options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Options</h3>
+
+<p>These are the available options:</p>
+
+<h4>
+<a id="--debug" class="anchor" href="#--debug" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>--debug</code>
+</h4>
+
+<p>This option prints out a debug report to help identify important nicknames that
+have not been explicitly assigned to a user in the users file.</p>
+
+<h4>
+<a id="--separate-userhosts" class="anchor" href="#--separate-userhosts" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>--separate-userhosts</code>
+</h4>
+
+<p>Tells chatstats to separate users by the full nick!user@host specification,
+rather than merely by nick. In cases where the hostname is indeterminable, the
+resultant user will have a description of !@.</p>
+
+<p>This option is best used in conjunction with a nick configuration file
+specifying users and their nicks or userhosts. Explicitly declared users will
+display by their alias (if defined) or by their most used nick.</p>
+
+<h4>
+<a id="--input-format" class="anchor" href="#--input-format" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>--input-format</code>
+</h4>
+
+<p>This option controls the format the input logs are in. chatstats currently
+supports two input formats:</p>
+
+<h5>
+<a id="chatstats-1" class="anchor" href="#chatstats-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>chatstats</h5>
+
+<p>The native log format of chatstats. At this time, chatstats is the only software
+that outputs this format. It is designed to be excellent for maintaining
+accurate logs.</p>
+
+<h5>
+<a id="mirc" class="anchor" href="#mirc" aria-hidden="true"><span class="octicon octicon-link"></span></a>mirc</h5>
+
+<p>The log format generated by some versions of <a href="http://www.mirc.com">mIRC</a>.
+chatstats should have no trouble reading this format, but it may report a large
+number of useless lines as being unrecognized, due to limited testing on logs
+actually generated by mIRC.</p>
+
+<p>Certain versions of mIRC generated logs that did not adequately distinguish
+between actions and joins, parts, quits, and other events. These logs are not
+currently supported, but support for them can be added on request.</p>
+
+<h4>
+<a id="--users-file" class="anchor" href="#--users-file" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>--users-file</code>
+</h4>
+
+<p>This option allows the user to specify a file to control manually linking
+nicknames for statistics purposes. The file currently supports two directives:</p>
+
+<h5>
+<a id="user" class="anchor" href="#user" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>USER</code>
+</h5>
+
+<p>Declares a new user. Subsequent directives will apply to this user, until
+another <code>USER</code> directive is encountered. An optional alias for the user may be
+specified after <code>USER</code> and a single tab or space.</p>
+
+<h5>
+<a id="nick" class="anchor" href="#nick" aria-hidden="true"><span class="octicon octicon-link"></span></a><code>NICK</code>
+</h5>
+
+<p>Assigns nicknames to the most recently declared user. Accepts any number of
+nicknames, separated by tabs or spaces. Multiple <code>NICK</code> directives are allowed.</p>
+
+<p>An extended nickname syntax is available to restrict nickname linkages to
+specific date or time ranges or specific user/host combinations. This is useful
+if two different users used the same nickname at different points in time. (This
+is most useful on logs spanning many years, where nicknames may be potentially
+reused after some time.) It's also useful for linking a large number of
+nicknames used by a single unique user/host combination. The syntax is as
+follows:</p>
+
+<p><code>&lt;nickname&gt;!&lt;user&gt;@&lt;host&gt;#&lt;start_date&gt;/&lt;end_date&gt;+&lt;start_time&gt;/&lt;end_time&gt;</code></p>
+
+<p>A complete example is <code>Joe!*@*.com#2002-10-03/2004-11-01@00:00:00/12:00:00</code>.
+This would capture events from a user named Joe connecting from a .com hostname,
+occurring from 2002-10-03 up to 2004-11-01 (but not including 2004-11-01),
+occurring from midnight to noon. The date and time sections are completely
+independent and tested separately.</p>
+
+<p>Linking based on user/host combinations is limited based on the completeness of
+the logs used. Since hosts are generally not available on each line in logs,
+this information must be inferred from join and nick change events.</p>
+
+<p>All fields are optional, but the delimiters are required if using the extended
+syntax. The dates must be in YYYY-MM-DD format, and the times must be in
+HH:MM:SS format. You may use either the hostname extended section, the time
+range extended section, or both.</p>
+
+<p>Two different wildcard operators are supported: <code>*</code> and <code>?</code>. <code>*</code> matches zero
+or more characters, and <code>?</code> matches a single optional character.</p>
+
+<h2>
+<a id="bugs-and-feature-requests" class="anchor" href="#bugs-and-feature-requests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bugs and Feature Requests</h2>
+
+<p>Please submit bug reports or feature requests to the issue tracker at the
+<a href="https://github.com/aexoden/chatstats">chatstats GitHub page</a>.</p>
+
+<p>If requesting support for a new log format, or reporting a bug in an existing
+format, please submit a log sample in your report. The more complete the sample,
+the better. (Rarer event types such as channel CTCPs or channel notices are
+recommended to be included.)</p>
+
+<h2>
+<a id="license" class="anchor" href="#license" aria-hidden="true"><span class="octicon octicon-link"></span></a>License</h2>
+
+<p>chatstats is licensed under the
+<a href="http://opensource.org/licenses/MIT">MIT license</a>.</p>
+
+<h2>
+<a id="installation" class="anchor" href="#installation" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installation</h2>
+
+<p>chatstats has the following dependencies:</p>
+
+<ul>
+<li><a href="http://www.gcc.org">GCC 4.6+</a></li>
+<li><a href="http://www.gtkmm.org">glibmm 2.28</a></li>
+<li><a href="http://gittup.org/tup/">tup</a></li>
+<li><a href="http://www.sqlite.org">SQLite 3+</a></li>
+</ul>
+
+<p>To build chatstats, ensure dependencies are installed, change to the directory
+containing the chatstats sources, and execute <code>./build</code>. chatstats should be
+successfully built. There is currently no installation procedure, but the binary
+is self-contained, so you should be able to copy it to any standard binary
+location.</p>
+      </section>
+    </div>
+
+    
+  </body>
+</html>
